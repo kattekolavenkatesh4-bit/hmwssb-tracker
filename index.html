@@ -434,10 +434,28 @@ db.collection("works").onSnapshot(snapshot => {
     id: doc.id,
     ...doc.data()
   }));
+
+  rW('fw');   // 👈 ADD THIS LINE
 });
 </script>
 
-if(!works.length){works=[{id:1,type:'Freshwater',name:'Main Pipeline Replacement',area:'Banjara Hills',house:'8-2-293',colony:'Road No. 12',geo:'17.4126,78.4371',govtag:'HMWS/FW/2024/0045',status:'Work Done',date:'2024-06-10',materials:[{name:'GI Pipe 4"',qty:20,cost:850},{name:'Elbow Joint 4"',qty:15,cost:45}],revenue:28000,photos:[]},{id:2,type:'Freshwater',name:'New Water Connection',area:'Jubilee Hills',house:'1-13-6',colony:'Phase 2',geo:'17.4311,78.4136',govtag:'HMWS/FW/2024/0051',status:'In Progress',date:'2024-06-15',materials:[{name:'uPVC Pipe 1/2"',qty:50,cost:120}],revenue:12000,photos:[]},{id:3,type:'Freshwater',name:'Meter Box Installation',area:'Madhapur',house:'6-3-248/A',colony:'Prashasan Nagar',geo:'',govtag:'HMWS/FW/2024/0062',status:'Geotag Pending',date:'2024-06-18',materials:[{name:'Water Meter 15mm',qty:5,cost:1200}],revenue:8500,photos:[]},{id:4,type:'Sewerage',name:'Sewer Line Clearance',area:'Kukatpally',house:'KPHB Ph 4',colony:'',geo:'17.4947,78.3996',govtag:'HMWS/SW/2024/0033',status:'Geotag Done',date:'2024-06-12',materials:[{name:'PVC Pipe 6"',qty:10,cost:340},{name:'Inspection Chamber',qty:1,cost:1800}],revenue:15000,photos:[]},{id:5,type:'Sewerage',name:'New Sewer Connection',area:'Gachibowli',house:'Plot 112',colony:'IDA Scheme',geo:'17.4400,78.3489',govtag:'HMWS/SW/2024/0041',status:'In Progress',date:'2024-06-20',materials:[{name:'RCC Pipe 9"',qty:6,cost:780}],revenue:9200,photos:[]}];sv();}
+</script>
+
+<script>
+if(!works.length){
+  works=[{id:1,type:'Freshwater',name:'Main Pipeline Replacement',...}];
+  sv();
+}
+
+if(!wh.length){
+  wh=[...];
+  svW();
+  log=[...];
+  svL();
+}
+
+// ALL remaining functions...
+</script>
 if(!wh.length){wh=[{id:1,name:'GI Pipe 4"',cat:'Pipes',unit:'nos',stock:45,min:10,price:850,supplier:'Tata Steel',notes:'4 inch'},{id:2,name:'uPVC Pipe 1/2"',cat:'Pipes',unit:'mtr',stock:8,min:20,price:120,supplier:'Finolex',notes:''},{id:3,name:'Elbow Joint 4"',cat:'Fittings',unit:'nos',stock:120,min:25,price:45,supplier:'Supreme',notes:''},{id:4,name:'Water Meter 15mm',cat:'Meters',unit:'nos',stock:5,min:8,price:1200,supplier:'Itron',notes:''},{id:5,name:'Gate Valve 4"',cat:'Valves',unit:'nos',stock:0,min:5,price:2200,supplier:'IVC',notes:''},{id:6,name:'PVC Pipe 6"',cat:'Pipes',unit:'mtr',stock:60,min:15,price:340,supplier:'Supreme',notes:''},{id:7,name:'Inspection Chamber',cat:'Chambers',unit:'nos',stock:3,min:4,price:1800,supplier:'Local',notes:'RCC'},{id:8,name:'RCC Pipe 9"',cat:'Pipes',unit:'nos',stock:18,min:6,price:780,supplier:'Local',notes:''},{id:9,name:'Copper Nipple',cat:'Fittings',unit:'nos',stock:85,min:30,price:35,supplier:'Various',notes:''},{id:10,name:'Ferrule 1/2"',cat:'Fittings',unit:'nos',stock:200,min:50,price:18,supplier:'Various',notes:''}];svW();log=[{id:1,matId:1,type:'in',qty:65,balance:65,date:'2024-05-01',ref:'Opening',note:''},{id:2,matId:2,type:'in',qty:58,balance:58,date:'2024-05-01',ref:'Opening',note:''},{id:3,matId:1,type:'auto',qty:-20,balance:45,date:'2024-06-10',ref:'Work#1',note:'Main Pipeline'},{id:4,matId:2,type:'auto',qty:-50,balance:8,date:'2024-06-15',ref:'Work#2',note:'Water Connection'}];svL();}
 
 function sv() {
