@@ -512,7 +512,8 @@ function saveW(){
   nc();toast(eWId?'Work updated!':'✅ Work added!');eWId=null;tph=[];
 }
 function delW(id){
-  if(!confirm('Delete this work?'))return;
+  const w = works.find(x => x.id === id);
+  if(!confirm(`Delete "${w.name}"?`)) return;
   works = works.filter(w => w.id !== id);
   sv();
   rW(cp);
