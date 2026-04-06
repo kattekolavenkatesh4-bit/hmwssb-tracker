@@ -4,13 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HMWSSB Work Tracker</title>
-<!-- PWA Support -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0d1117">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="HMWSSB Tracker">
-<link rel="apple-touch-icon" href="icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0d1117;--s:#161b22;--s2:#1e2530;--bd:#2a3142;--bd2:#374151;--tx:#e6edf3;--t2:#8b949e;--t3:#6e7681;--ac:#1f6feb;--a2:#388bfd;--fw:#0ea5e9;--sw:#a855f7;--or:#f97316;--bl:#3b82f6;--re:#ef4444;--gr:#22c55e;--ye:#eab308;--r:10px}
@@ -34,7 +27,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 .main{margin-left:220px;display:flex;flex-direction:column;min-height:100vh}
 .topbar{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--bd);padding:0 24px;height:56px;display:flex;align-items:center;gap:12px;z-index:50}
 .ptitle{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700}
-.tabs{display:flex;gap:6px;margin-left:auto}
+.tabs{display:flex;gap:6px;margin-left:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:1}
 .tab{padding:6px 14px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--bd);background:none;color:var(--t2);transition:all .15s}
 .tab:hover{color:var(--tx);border-color:var(--bd2)}
 .t-fw{border-color:var(--fw)!important;background:rgba(14,165,233,.12)!important;color:var(--fw)!important}
@@ -63,11 +56,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 .fs:focus{border-color:var(--ac)}
 .vt{display:flex;background:var(--s);border:1px solid var(--bd);border-radius:7px;overflow:hidden}
 .vb{padding:7px 12px;cursor:pointer;border:none;background:none;color:var(--t3);transition:all .15s}.vb.on{background:var(--s2);color:var(--tx)}
-.tw{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+.tw{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}.tw-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:collapse;font-size:13px}
 thead tr{background:var(--s2);border-bottom:1px solid var(--bd)}
 th{padding:10px 12px;text-align:left;font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap}
-th.so{cursor:pointer;user-select:none}.th.so:hover{color:var(--tx)}
+th.so{cursor:pointer;user-select:none}th.so:hover{color:var(--tx)}
 tbody tr{border-bottom:1px solid var(--bd);transition:background .12s;cursor:pointer}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:var(--s2)}
@@ -218,8 +211,170 @@ tbody tr:hover .ra{opacity:1}
 .toast.on{transform:translateX(0)}
 .td{width:8px;height:8px;border-radius:50%;background:var(--gr)}
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:4px}
-@media(max-width:860px){.sidebar{width:54px}.logo-name,.logo-sub,.nl,.nb span,.nc,.na,.sfoot .u-name,.sfoot .u-role{display:none}.main{margin-left:54px}.srow{grid-template-columns:repeat(2,1fr)!important}.fg{grid-template-columns:1fr}.fi.s2,.sh,.so2,.pd{grid-column:span 1}.wlay{grid-template-columns:1fr}}
+@media(max-width:860px){.sidebar{width:54px}.logo-name,.logo-sub,.nl,.nb span,.nc,.na{display:none}.main{margin-left:54px}.srow{grid-template-columns:repeat(2,1fr)!important}.fg{grid-template-columns:1fr}.fi.s2,.sh,.so2,.pd{grid-column:span 1}.wlay{grid-template-columns:1fr}.topbar{padding:0 12px;gap:8px}.ptitle{font-size:16px}.tabs{gap:4px}.tab{padding:5px 9px;font-size:11px}.page{padding:12px 12px}.tw-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}}
 </style>
+
+<!-- Firebase SDKs -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  // ── YOUR FIREBASE CONFIG ──
+  // Replace these values with your own from Firebase Console:
+  // console.firebase.google.com → Project Settings → Your apps → Web app → SDK setup
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // ── Expose Firebase helpers to global scope ──
+  window._db = db;
+  window._fs = { collection, doc, setDoc, getDocs, deleteDoc, onSnapshot, writeBatch };
+  window._fbReady = true;
+
+  // ── Sync indicator ──
+  function setSyncStatus(state, msg) {
+    const el = document.getElementById('sync-status');
+    if (!el) return;
+    const colors = { ok: '#22c55e', syncing: '#f97316', error: '#ef4444', offline: '#6e7681' };
+    const icons  = { ok: '☁️', syncing: '🔄', error: '⚠️', offline: '📴' };
+    el.style.color = colors[state] || '#6e7681';
+    el.textContent = (icons[state] || '') + ' ' + msg;
+  }
+  window.setSyncStatus = setSyncStatus;
+
+  // ── Save one document to Firestore ──
+  async function fbSet(col, id, data) {
+    try {
+      setSyncStatus('syncing', 'Saving…');
+      await setDoc(doc(db, col, String(id)), data);
+      setSyncStatus('ok', 'Synced');
+    } catch(e) {
+      setSyncStatus('error', 'Sync failed');
+      console.error('fbSet error:', e);
+    }
+  }
+  window.fbSet = fbSet;
+
+  // ── Delete a document ──
+  async function fbDel(col, id) {
+    try {
+      await deleteDoc(doc(db, col, String(id)));
+    } catch(e) { console.error('fbDel error:', e); }
+  }
+  window.fbDel = fbDel;
+
+  // ── Real-time listeners: sync Firestore → local state ──
+  function startListeners() {
+    // Works listener
+    onSnapshot(collection(db, 'works'), snap => {
+      snap.docChanges().forEach(change => {
+        const data = change.doc.data();
+        if (change.type === 'added' || change.type === 'modified') {
+          const idx = works.findIndex(w => String(w.id) === change.doc.id);
+          if (idx !== -1) works[idx] = data; else works.unshift(data);
+        } else if (change.type === 'removed') {
+          works = works.filter(w => String(w.id) !== change.doc.id);
+        }
+      });
+      localStorage.setItem('h_w', JSON.stringify(works));
+      if (cp === 'fw' || cp === 'sw') rW(cp); nc();
+    });
+
+    // Warehouse listener
+    onSnapshot(collection(db, 'warehouse'), snap => {
+      snap.docChanges().forEach(change => {
+        const data = change.doc.data();
+        if (change.type === 'added' || change.type === 'modified') {
+          const idx = wh.findIndex(m => String(m.id) === change.doc.id);
+          if (idx !== -1) wh[idx] = data; else wh.push(data);
+        } else if (change.type === 'removed') {
+          wh = wh.filter(m => String(m.id) !== change.doc.id);
+        }
+      });
+      localStorage.setItem('h_wh', JSON.stringify(wh));
+      if (cp === 'wh') { rwl(); rwAlert(); if (selWh) rWhDet(selWh); } nc();
+    });
+
+    // Stock log listener
+    onSnapshot(collection(db, 'stocklog'), snap => {
+      snap.docChanges().forEach(change => {
+        const data = change.doc.data();
+        if (change.type === 'added' || change.type === 'modified') {
+          const idx = log.findIndex(l => String(l.id) === change.doc.id);
+          if (idx !== -1) log[idx] = data; else log.push(data);
+        } else if (change.type === 'removed') {
+          log = log.filter(l => String(l.id) !== change.doc.id);
+        }
+      });
+      localStorage.setItem('h_log', JSON.stringify(log));
+      if (cp === 'wh' && selWh) rWhDet(selWh);
+    });
+
+    setSyncStatus('ok', 'Live sync on');
+  }
+
+  // ── Initial full load from Firestore ──
+  async function initialLoad() {
+    setSyncStatus('syncing', 'Loading…');
+    try {
+      // Only load from Firebase if it has data (non-empty)
+      const [wSnap, whSnap, logSnap] = await Promise.all([
+        getDocs(collection(db, 'works')),
+        getDocs(collection(db, 'warehouse')),
+        getDocs(collection(db, 'stocklog'))
+      ]);
+
+      if (!wSnap.empty) {
+        works = wSnap.docs.map(d => d.data());
+        localStorage.setItem('h_w', JSON.stringify(works));
+      } else if (works.length > 0) {
+        // Push local data to Firebase (first time setup)
+        const batch = writeBatch(db);
+        works.forEach(w => batch.set(doc(db, 'works', String(w.id)), w));
+        await batch.commit();
+      }
+
+      if (!whSnap.empty) {
+        wh = whSnap.docs.map(d => d.data());
+        localStorage.setItem('h_wh', JSON.stringify(wh));
+      } else if (wh.length > 0) {
+        const batch = writeBatch(db);
+        wh.forEach(m => batch.set(doc(db, 'warehouse', String(m.id)), m));
+        await batch.commit();
+      }
+
+      if (!logSnap.empty) {
+        log = logSnap.docs.map(d => d.data());
+        localStorage.setItem('h_log', JSON.stringify(log));
+      } else if (log.length > 0) {
+        const batch = writeBatch(db);
+        log.forEach(l => batch.set(doc(db, 'stocklog', String(l.id)), l));
+        await batch.commit();
+      }
+
+      if (cp === 'fw' || cp === 'sw') rW(cp);
+      if (cp === 'mat') rMat();
+      if (cp === 'wh') { rwl(); rwAlert(); }
+      nc();
+      setSyncStatus('ok', 'Synced');
+      startListeners();
+    } catch(e) {
+      console.warn('Firebase load failed, using local data:', e);
+      setSyncStatus('offline', 'Offline mode');
+    }
+  }
+
+  // Wait for app to boot then load
+  window.addEventListener('load', () => setTimeout(initialLoad, 500));
+</script>
 </head>
 <body>
 
@@ -246,7 +401,7 @@ tbody tr:hover .ra{opacity:1}
 <button class="tab" id="tab-mat" onclick="gp('mat')">📦 Materials</button>
 <button class="tab" id="tab-wh" onclick="gp('wh')">🏭 Warehouse</button>
 </div>
-<button class="btn bp" id="addbtn" onclick="openWM()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Work</button>
+<span id="sync-status" onclick="openFBGuide()" style="font-size:11.5px;color:var(--t3);white-space:nowrap;margin-right:4px;cursor:pointer;padding:4px 8px;border-radius:5px;border:1px solid var(--bd);background:var(--s)" title="Click for Firebase setup guide">📴 Not configured</span><button class="btn bp" id="addbtn" onclick="openWM()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Work</button>
 </header>
 
 <div class="page on" id="page-fw"></div>
@@ -261,7 +416,7 @@ tbody tr:hover .ra{opacity:1}
 </div>
 <div class="tw" style="margin-bottom:18px">
 <div style="padding:12px 16px;border-bottom:1px solid var(--bd);background:var(--s2);font-family:'Rajdhani',sans-serif;font-weight:700">📦 Material Usage — <span id="mph">All</span></div>
-<table><thead><tr><th>Material</th><th>Work</th><th>Type</th><th>Qty</th><th>Unit ₹</th><th>Total ₹</th></tr></thead><tbody id="mtb"></tbody></table>
+<div class="tw-scroll"><table><thead><tr><th>Material</th><th>Work</th><th>Type</th><th>Qty</th><th>Unit ₹</th><th>Total ₹</th></tr></thead><tbody id="mtb"></tbody></table></div>
 <div id="memp" class="emp" style="display:none"><div class="ei">📦</div><div class="et">No data</div></div>
 </div>
 <div class="pc"><div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:15px;margin-bottom:14px">Monthly Overview</div><div id="pbars"></div></div>
@@ -405,64 +560,32 @@ tbody tr:hover .ra{opacity:1}
 
 <!-- TOAST -->
 <div class="toast" id="toast"><div class="td" id="tdot"></div><span id="tmsg"></span></div>
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyC2Wn0eGrrWi6d5A_4kYg6FNChsPrClVPk",
-  authDomain: "hmwssb-tracking.firebaseapp.com",
-  projectId: "hmwssb-tracking",
-  storageBucket: "hmwssb-tracking.firebasestorage.app",
-  messagingSenderId: "468353902970",
-  appId: "1:468353902970:web:a92f708d38121302200ec3"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-</script>
 
 <script>
 // ═══ DATA ═══
-let works = [];
+let works=JSON.parse(localStorage.getItem('h_w')||'[]');
 let wh=JSON.parse(localStorage.getItem('h_wh')||'[]');
 let log=JSON.parse(localStorage.getItem('h_log')||'[]');
+let cp='fw',curDP=null,eWId=null,eWhId=null,selWh=null,txnT='in',mmo='all';
+let vw={fw:'table',sw:'table'},srt={fw:{f:'date',d:-1},sw:{f:'date',d:-1}};
+let tph=[];
 
-db.collection("works").onSnapshot(snapshot => {
-  works = snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  }));
-
-  rW('fw');   // 👈 ADD THIS LINE
-});
-</script>
-
-</script>
-
-<script>
-if(!works.length){
-  works=[{id:1,type:'Freshwater',name:'Main Pipeline Replacement',...}];
-  sv();
-}
-
-if(!wh.length){
-  wh=[...];
-  svW();
-  log=[...];
-  svL();
-}
-
-// ALL remaining functions...
-</script>
+if(!works.length){works=[{id:1,type:'Freshwater',name:'Main Pipeline Replacement',area:'Banjara Hills',house:'8-2-293',colony:'Road No. 12',geo:'17.4126,78.4371',govtag:'HMWS/FW/2024/0045',status:'Work Done',date:'2024-06-10',materials:[{name:'GI Pipe 4"',qty:20,cost:850},{name:'Elbow Joint 4"',qty:15,cost:45}],revenue:28000,photos:[]},{id:2,type:'Freshwater',name:'New Water Connection',area:'Jubilee Hills',house:'1-13-6',colony:'Phase 2',geo:'17.4311,78.4136',govtag:'HMWS/FW/2024/0051',status:'In Progress',date:'2024-06-15',materials:[{name:'uPVC Pipe 1/2"',qty:50,cost:120}],revenue:12000,photos:[]},{id:3,type:'Freshwater',name:'Meter Box Installation',area:'Madhapur',house:'6-3-248/A',colony:'Prashasan Nagar',geo:'',govtag:'HMWS/FW/2024/0062',status:'Geotag Pending',date:'2024-06-18',materials:[{name:'Water Meter 15mm',qty:5,cost:1200}],revenue:8500,photos:[]},{id:4,type:'Sewerage',name:'Sewer Line Clearance',area:'Kukatpally',house:'KPHB Ph 4',colony:'',geo:'17.4947,78.3996',govtag:'HMWS/SW/2024/0033',status:'Geotag Done',date:'2024-06-12',materials:[{name:'PVC Pipe 6"',qty:10,cost:340},{name:'Inspection Chamber',qty:1,cost:1800}],revenue:15000,photos:[]},{id:5,type:'Sewerage',name:'New Sewer Connection',area:'Gachibowli',house:'Plot 112',colony:'IDA Scheme',geo:'17.4400,78.3489',govtag:'HMWS/SW/2024/0041',status:'In Progress',date:'2024-06-20',materials:[{name:'RCC Pipe 9"',qty:6,cost:780}],revenue:9200,photos:[]}];sv();}
 if(!wh.length){wh=[{id:1,name:'GI Pipe 4"',cat:'Pipes',unit:'nos',stock:45,min:10,price:850,supplier:'Tata Steel',notes:'4 inch'},{id:2,name:'uPVC Pipe 1/2"',cat:'Pipes',unit:'mtr',stock:8,min:20,price:120,supplier:'Finolex',notes:''},{id:3,name:'Elbow Joint 4"',cat:'Fittings',unit:'nos',stock:120,min:25,price:45,supplier:'Supreme',notes:''},{id:4,name:'Water Meter 15mm',cat:'Meters',unit:'nos',stock:5,min:8,price:1200,supplier:'Itron',notes:''},{id:5,name:'Gate Valve 4"',cat:'Valves',unit:'nos',stock:0,min:5,price:2200,supplier:'IVC',notes:''},{id:6,name:'PVC Pipe 6"',cat:'Pipes',unit:'mtr',stock:60,min:15,price:340,supplier:'Supreme',notes:''},{id:7,name:'Inspection Chamber',cat:'Chambers',unit:'nos',stock:3,min:4,price:1800,supplier:'Local',notes:'RCC'},{id:8,name:'RCC Pipe 9"',cat:'Pipes',unit:'nos',stock:18,min:6,price:780,supplier:'Local',notes:''},{id:9,name:'Copper Nipple',cat:'Fittings',unit:'nos',stock:85,min:30,price:35,supplier:'Various',notes:''},{id:10,name:'Ferrule 1/2"',cat:'Fittings',unit:'nos',stock:200,min:50,price:18,supplier:'Various',notes:''}];svW();log=[{id:1,matId:1,type:'in',qty:65,balance:65,date:'2024-05-01',ref:'Opening',note:''},{id:2,matId:2,type:'in',qty:58,balance:58,date:'2024-05-01',ref:'Opening',note:''},{id:3,matId:1,type:'auto',qty:-20,balance:45,date:'2024-06-10',ref:'Work#1',note:'Main Pipeline'},{id:4,matId:2,type:'auto',qty:-50,balance:8,date:'2024-06-15',ref:'Work#2',note:'Water Connection'}];svL();}
 
-function sv() {
-  works.forEach(w => {
-    db.collection("works").doc(String(w.id)).set(w);
-  });
+function sv(){
+  localStorage.setItem('h_w',JSON.stringify(works));
+  if(window.fbSet) works.forEach(w=>fbSet('works',w.id,w));
 }
+function svW(){
+  localStorage.setItem('h_wh',JSON.stringify(wh));
+  if(window.fbSet) wh.forEach(m=>fbSet('warehouse',m.id,m));
+}
+function svL(){
+  localStorage.setItem('h_log',JSON.stringify(log));
+  if(window.fbSet) log.forEach(l=>fbSet('stocklog',l.id,l));
+}
+function nid(a){return a.length?Math.max(...a.map(x=>x.id))+1:1}
 
 // ═══ PAGE NAV ═══
 function gp(p){
@@ -523,7 +646,7 @@ function rW(t){
 <select class="fs" id="fm-${t}" onchange="rW('${t}')"><option value="">All Months</option>${mO}</select>
 <div class="vt"><button class="vb ${vw[t]==='table'?'on':''}" id="vt-${t}" onclick="setV('${t}','table')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/></svg></button><button class="vb ${vw[t]==='cards'?'on':''}" id="vc-${t}" onclick="setV('${t}','cards')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button></div>
 </div>
-${vw[t]==='table'?`<div class="tw"><table><thead><tr><th>#</th><th onclick="sortW('${t}','name')" style="cursor:pointer">Work Name</th><th>Address</th><th onclick="sortW('${t}','area')" style="cursor:pointer">Area</th><th>Geotag</th><th>Govt Tag</th><th>Materials</th><th>Photos</th><th>Status</th><th onclick="sortW('${t}','date')" style="cursor:pointer">Date</th><th>Actions</th></tr></thead><tbody>${trows}</tbody></table>${list.length===0?emp:''}</div>`:`<div class="cg">${list.length===0?emp:cards}</div>`}`;
+${vw[t]==='table'?`<div class="tw"><div class="tw-scroll"><table><thead><tr><th>#</th><th onclick="sortW('${t}','name')" style="cursor:pointer">Work Name</th><th>Address</th><th onclick="sortW('${t}','area')" style="cursor:pointer">Area</th><th>Geotag</th><th>Govt Tag</th><th>Materials</th><th>Photos</th><th>Status</th><th onclick="sortW('${t}','date')" style="cursor:pointer">Date</th><th>Actions</th></tr></thead><tbody>${trows}</tbody></table></div>${list.length===0?emp:''}</div>`:`<div class="cg">${list.length===0?emp:cards}</div>`}`;
 }
 function nc(){document.getElementById('nc-fw').textContent=works.filter(w=>w.type==='Freshwater').length;document.getElementById('nc-sw').textContent=works.filter(w=>w.type==='Sewerage').length;const lw=wh.filter(m=>m.stock<=m.min).length;const b=document.getElementById('nc-wh');b.style.display=lw>0?'inline-flex':'none';b.textContent=lw;}
 
@@ -543,23 +666,30 @@ function saveW(){
   const d={id:eWId||nid(works),type:document.getElementById('fty').value,name,area,house:document.getElementById('fh').value.trim(),colony:document.getElementById('fco').value.trim(),geo:document.getElementById('fg').value.trim(),govtag:document.getElementById('fgt').value.trim(),status:document.getElementById('fst').value,date:document.getElementById('fdt').value,revenue:Number(document.getElementById('frv').value)||0,materials:mats,photos:tph};
   const prev=eWId?(works.find(w=>w.id===eWId)?.materials||[]):[];
   if(eWId){const i=works.findIndex(w=>w.id===eWId);if(i!==-1)works[i]=d;}else works.unshift(d);
-  sv();
+  // Save to localStorage
+  localStorage.setItem('h_w',JSON.stringify(works));
+  // Push only this work to Firebase
+  if(window.fbSet) fbSet('works',d.id,d);
   prev.forEach(pm=>{const m=wh.find(x=>x.name.toLowerCase()===pm.name.toLowerCase());if(m){m.stock+=pm.qty;log.push({id:nid(log),matId:m.id,type:'adj',qty:+pm.qty,balance:m.stock,date:new Date().toISOString().slice(0,10),ref:'Work#'+d.id,note:'Edit reversal'});}});
   mats.forEach(m=>{if(!m.name||m.qty<=0)return;const wm=wh.find(x=>x.name.toLowerCase()===m.name.toLowerCase());if(wm){const dq=Math.min(m.qty,wm.stock);wm.stock-=dq;log.push({id:nid(log),matId:wm.id,type:'auto',qty:-dq,balance:wm.stock,date:d.date||new Date().toISOString().slice(0,10),ref:'Work#'+d.id,note:'Auto: '+d.name});if(wm.stock<=wm.min&&wm.min>0)setTimeout(()=>toast('⚠️ Low stock: '+wm.name+' ('+wm.stock+' '+wm.unit+')','var(--or)'),1400);}});
-  svW();svL();
+  // Push warehouse and log changes to Firebase
+  localStorage.setItem('h_wh',JSON.stringify(wh));
+  localStorage.setItem('h_log',JSON.stringify(log));
+  if(window.fbSet){
+    wh.forEach(m=>fbSet('warehouse',m.id,m));
+    log.slice(-20).forEach(l=>fbSet('stocklog',l.id,l));
+  }
   document.getElementById('wm-ov').classList.remove('on');
   if(cp==='fw'||cp==='sw')rW(cp);
   if(cp==='wh'){rwl();if(selWh)rWhDet(selWh);rwAlert();}
   nc();toast(eWId?'Work updated!':'✅ Work added!');eWId=null;tph=[];
 }
 function delW(id){
-  const w = works.find(x => x.id === id);
-  if(!confirm(`Delete "${w.name}"?`)) return;
-  works = works.filter(w => w.id !== id);
-  sv();
-  rW(cp);
-  nc();
-  toast('Deleted.');
+  if(!confirm('Delete this work?'))return;
+  if(window.fbDel) fbDel('works',id);
+  works=works.filter(w=>w.id!==id);
+  localStorage.setItem('h_w',JSON.stringify(works));
+  rW(cp);nc();toast('Deleted.');
 }
 function getMR(){return[...document.querySelectorAll('.mr')].map(r=>({name:r.querySelector('.mn').value.trim(),qty:Number(r.querySelector('.mq').value)||0,cost:Number(r.querySelector('.mc2').value)||0})).filter(m=>m.name);}
 function addMR(m={}){const d=document.createElement('div');d.className='mr';d.innerHTML=`<input type="text" class="fn mn" placeholder="Material name" value="${m.name||''}"><input type="number" class="fn mq" placeholder="Qty" value="${m.qty||''}"><input type="number" class="fn mc2" placeholder="Unit ₹" value="${m.cost||''}"><button class="db" onclick="this.parentElement.remove()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;document.getElementById('mwrap').appendChild(d);}
@@ -677,19 +807,67 @@ function rwAlert(){
   else bar.classList.remove('on');
 }
 
-function qAdd(id,n){const m=wh.find(x=>x.id===id);if(!m)return;m.stock+=n;log.push({id:nid(log),matId:id,type:'in',qty:n,balance:m.stock,date:new Date().toISOString().slice(0,10),ref:'Quick Add',note:''});svW();svL();rWhDet(id);rwl();rwAlert();nc();toast('+'+n+' '+m.unit+' added to '+m.name,'var(--gr)');}
-function qRem(id){const m=wh.find(x=>x.id===id);if(!m||m.stock<=0){toast('Already zero!','var(--re)');return;}m.stock--;log.push({id:nid(log),matId:id,type:'out',qty:-1,balance:m.stock,date:new Date().toISOString().slice(0,10),ref:'Quick Remove',note:''});svW();svL();rWhDet(id);rwl();rwAlert();nc();toast('−1 removed from '+m.name,'var(--or)');}
+function qAdd(id,n){
+  const m=wh.find(x=>x.id===id);if(!m)return;
+  m.stock+=n;
+  const entry={id:nid(log),matId:id,type:'in',qty:n,balance:m.stock,date:new Date().toISOString().slice(0,10),ref:'Quick Add',note:''};
+  log.push(entry);
+  localStorage.setItem('h_wh',JSON.stringify(wh));
+  localStorage.setItem('h_log',JSON.stringify(log));
+  if(window.fbSet){fbSet('warehouse',m.id,m);fbSet('stocklog',entry.id,entry);}
+  rWhDet(id);rwl();rwAlert();nc();
+  toast('+'+n+' '+m.unit+' added to '+m.name,'var(--gr)');
+}
+function qRem(id){
+  const m=wh.find(x=>x.id===id);if(!m||m.stock<=0){toast('Already zero!','var(--re)');return;}
+  m.stock--;
+  const entry={id:nid(log),matId:id,type:'out',qty:-1,balance:m.stock,date:new Date().toISOString().slice(0,10),ref:'Quick Remove',note:''};
+  log.push(entry);
+  localStorage.setItem('h_wh',JSON.stringify(wh));
+  localStorage.setItem('h_log',JSON.stringify(log));
+  if(window.fbSet){fbSet('warehouse',m.id,m);fbSet('stocklog',entry.id,entry);}
+  rWhDet(id);rwl();rwAlert();nc();
+  toast('−1 removed from '+m.name,'var(--or)');
+}
 
 function openWIA(){eWhId=null;document.getElementById('wi-t').textContent='➕ Add New Material';['win','wis','wim','wip','wisp','wino'].forEach(id=>document.getElementById(id).value='');document.getElementById('wic').value='Pipes';document.getElementById('wiu').value='nos';document.getElementById('wi-ov').classList.add('on');}
 function openWIE(){const m=wh.find(x=>x.id===selWh);if(!m)return;eWhId=m.id;document.getElementById('wi-t').textContent='✏️ Edit Material';document.getElementById('win').value=m.name;document.getElementById('wic').value=m.cat;document.getElementById('wiu').value=m.unit;document.getElementById('wis').value=m.stock;document.getElementById('wim').value=m.min;document.getElementById('wip').value=m.price;document.getElementById('wisp').value=m.supplier||'';document.getElementById('wino').value=m.notes||'';document.getElementById('wi-ov').classList.add('on');}
 function closeWIOv(e){if(e&&e.target!==document.getElementById('wi-ov'))return;document.getElementById('wi-ov').classList.remove('on');eWhId=null;}
-function saveWI(){const name=document.getElementById('win').value.trim();if(!name){toast('Enter material name!','var(--re)');return;}const stock=Number(document.getElementById('wis').value)||0;const d={id:eWhId||nid(wh),name,cat:document.getElementById('wic').value,unit:document.getElementById('wiu').value,stock,min:Number(document.getElementById('wim').value)||0,price:Number(document.getElementById('wip').value)||0,supplier:document.getElementById('wisp').value.trim(),notes:document.getElementById('wino').value.trim()};if(eWhId){const i=wh.findIndex(x=>x.id===eWhId);if(i!==-1)wh[i]=d;}else{wh.push(d);if(stock>0)log.push({id:nid(log),matId:d.id,type:'in',qty:stock,balance:stock,date:new Date().toISOString().slice(0,10),ref:'Opening',note:'Initial entry'});svL();}svW();document.getElementById('wi-ov').classList.remove('on');eWhId=null;rwl();rwAlert();nc();if(d.id===selWh||!eWhId)rWhDet(d.id);toast(eWhId?'Material updated!':'✅ Material added!');}
-function delWI(){const m=wh.find(x=>x.id===selWh);if(!m||!confirm('Delete "'+m.name+'"?'))return;wh=wh.filter(x=>x.id!==selWh);log=log.filter(l=>l.matId!==selWh);svW();svL();selWh=null;document.getElementById('wer').style.display='flex';document.getElementById('wdet').style.display='none';rwl();rwAlert();nc();toast('Deleted.');}
+function saveWI(){const name=document.getElementById('win').value.trim();if(!name){toast('Enter material name!','var(--re)');return;}const stock=Number(document.getElementById('wis').value)||0;const wasEdit=!!eWhId;const d={id:eWhId||nid(wh),name,cat:document.getElementById('wic').value,unit:document.getElementById('wiu').value,stock,min:Number(document.getElementById('wim').value)||0,price:Number(document.getElementById('wip').value)||0,supplier:document.getElementById('wisp').value.trim(),notes:document.getElementById('wino').value.trim()};if(eWhId){const i=wh.findIndex(x=>x.id===eWhId);if(i!==-1)wh[i]=d;}else{wh.push(d);if(stock>0){const entry={id:nid(log),matId:d.id,type:'in',qty:stock,balance:stock,date:new Date().toISOString().slice(0,10),ref:'Opening',note:'Initial entry'};log.push(entry);localStorage.setItem('h_log',JSON.stringify(log));if(window.fbSet)fbSet('stocklog',entry.id,entry);}}// Save to localStorage and Firebase
+  localStorage.setItem('h_wh',JSON.stringify(wh));
+  if(window.fbSet) fbSet('warehouse',d.id,d);
+  document.getElementById('wi-ov').classList.remove('on');
+  eWhId=null;rwl();rwAlert();nc();
+  selWh=d.id; rWhDet(d.id);
+  toast(wasEdit?'Material updated!':'✅ Material added!');}
+function delWI(){
+  const m=wh.find(x=>x.id===selWh);
+  if(!m||!confirm('Delete "'+m.name+'"?'))return;
+  if(window.fbDel){fbDel('warehouse',selWh);}
+  const logsToDelete=log.filter(l=>l.matId===selWh);
+  if(window.fbDel) logsToDelete.forEach(l=>fbDel('stocklog',l.id));
+  wh=wh.filter(x=>x.id!==selWh);
+  log=log.filter(l=>l.matId!==selWh);
+  localStorage.setItem('h_wh',JSON.stringify(wh));
+  localStorage.setItem('h_log',JSON.stringify(log));
+  selWh=null;
+  document.getElementById('wer').style.display='flex';
+  document.getElementById('wdet').style.display='none';
+  rwl();rwAlert();nc();toast('Deleted.');
+}
 
 function openTxn(type){const m=wh.find(x=>x.id===selWh);if(!m)return;txnT=type;document.getElementById('txnmn').textContent=m.name;document.getElementById('txncur').textContent=m.stock;document.getElementById('txnmu').textContent=m.unit;document.getElementById('txnd').value=new Date().toISOString().slice(0,10);['txnq','txns','txnr','txnno'].forEach(id=>document.getElementById(id).value='');document.getElementById('txntr').style.display='none';document.getElementById('txnqg').style.display=type==='adj'?'none':'flex';document.getElementById('txnsg').style.display=type==='adj'?'flex':'none';const tt={in:'📥 Add Stock to Warehouse',out:'📤 Remove Stock from Warehouse',adj:'🔧 Correct / Adjust Stock Count'};const tbl={in:'Add to Stock',out:'Remove from Stock',adj:'Save Correction'};document.getElementById('txnt').textContent=tt[type];document.getElementById('txnsb').textContent=tbl[type];document.getElementById('txnql').textContent=type==='in'?'Quantity to Add *':'Quantity to Remove *';document.getElementById('txn-ov').classList.add('on');}
 function closeTxnOv(e){if(e&&e.target!==document.getElementById('txn-ov'))return;document.getElementById('txn-ov').classList.remove('on');}
 function setTT(t){txnT=t;['in','out','adj'].forEach(x=>{document.getElementById('tt-'+x).className='ttbn'+(t===x?' tt-'+t:'');});document.getElementById('txnqg').style.display=t==='adj'?'none':'flex';document.getElementById('txnsg').style.display=t==='adj'?'flex':'none';document.getElementById('txnql').textContent=t==='in'?'Quantity to Add *':'Quantity to Remove *';}
-function saveTxn(){const m=wh.find(x=>x.id===selWh);if(!m)return;const date=document.getElementById('txnd').value||new Date().toISOString().slice(0,10);const ref=document.getElementById('txnr').value.trim();const note=document.getElementById('txnno').value.trim();let change=0,ns=m.stock;if(txnT==='adj'){const sv=Number(document.getElementById('txns').value);if(isNaN(sv)||sv<0){toast('Enter valid count!','var(--re)');return;}change=sv-m.stock;ns=sv;}else{const qty=Number(document.getElementById('txnq').value);if(!qty||qty<=0){toast('Enter valid quantity!','var(--re)');return;}if(txnT==='out'&&qty>m.stock){toast('Only '+m.stock+' '+m.unit+' available!','var(--re)');return;}change=txnT==='in'?qty:-qty;ns=m.stock+change;}m.stock=ns;log.push({id:nid(log),matId:m.id,type:txnT==='adj'?'adj':txnT==='in'?'in':'out',qty:change,balance:ns,date,ref,note});svW();svL();document.getElementById('txn-ov').classList.remove('on');rWhDet(m.id);rwl();rwAlert();nc();if(m.stock<=m.min&&m.min>0)toast('⚠️ Low stock: '+m.name+' ('+m.stock+' '+m.unit+')','var(--or)');else toast('✅ '+m.name+': now '+ns+' '+m.unit,'var(--gr)');}
+function saveTxn(){const m=wh.find(x=>x.id===selWh);if(!m)return;const date=document.getElementById('txnd').value||new Date().toISOString().slice(0,10);const ref=document.getElementById('txnr').value.trim();const note=document.getElementById('txnno').value.trim();let change=0,ns=m.stock;if(txnT==='adj'){const sv=Number(document.getElementById('txns').value);if(isNaN(sv)||sv<0){toast('Enter valid count!','var(--re)');return;}change=sv-m.stock;ns=sv;}else{const qty=Number(document.getElementById('txnq').value);if(!qty||qty<=0){toast('Enter valid quantity!','var(--re)');return;}if(txnT==='out'&&qty>m.stock){toast('Only '+m.stock+' '+m.unit+' available!','var(--re)');return;}change=txnT==='in'?qty:-qty;ns=m.stock+change;}m.stock=ns;log.push({id:nid(log),matId:m.id,type:txnT==='adj'?'adj':txnT==='in'?'in':'out',qty:change,balance:ns,date,ref,note});// Save locally and to Firebase
+  localStorage.setItem('h_wh',JSON.stringify(wh));
+  localStorage.setItem('h_log',JSON.stringify(log));
+  if(window.fbSet){
+    fbSet('warehouse',m.id,m);
+    fbSet('stocklog',log[log.length-1].id,log[log.length-1]);
+  }
+  document.getElementById('txn-ov').classList.remove('on');
+  rWhDet(m.id);rwl();rwAlert();nc();if(m.stock<=m.min&&m.min>0)toast('⚠️ Low stock: '+m.name+' ('+m.stock+' '+m.unit+')','var(--or)');else toast('✅ '+m.name+': now '+ns+' '+m.unit,'var(--gr)');}
 
 // ═══ TOAST ═══
 function toast(msg,col='var(--gr)'){const t=document.getElementById('toast');document.getElementById('tmsg').textContent=msg;document.getElementById('tdot').style.background=col;t.style.borderColor=col;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),3200);}
@@ -697,16 +875,57 @@ function toast(msg,col='var(--gr)'){const t=document.getElementById('toast');doc
 // ═══ INIT ═══
 gp('fw');
 </script>
-  <!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<!-- FIREBASE SETUP GUIDE MODAL -->
+<div class="ov" id="fb-guide-ov" onclick="closeFBGuide(event)" style="z-index:500">
+<div class="modal" onclick="event.stopPropagation()" style="max-width:600px">
+<div class="mh"><div class="mt">🔥 Firebase Setup Guide</div><button class="mc" onclick="closeFBGuide()">✕</button></div>
+<div class="mb" style="font-size:13.5px;line-height:1.7">
+<div style="background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.3);border-radius:8px;padding:14px;margin-bottom:16px">
+<b style="color:var(--or)">⚠️ One-time setup required</b><br>
+To enable cloud sync across PC and mobile, you need a free Firebase project. Follow these steps:
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="padding:12px;background:var(--s2);border-radius:8px;border-left:3px solid var(--fw)">
+<b>Step 1 — Create Firebase Project</b><br>
+<span style="color:var(--t3)">Go to <a href="https://console.firebase.google.com" target="_blank" style="color:var(--fw)">console.firebase.google.com</a> → Click "Add Project" → Enter name like "HMWSSB-Tracker" → Continue</span>
+</div>
+<div style="padding:12px;background:var(--s2);border-radius:8px;border-left:3px solid var(--sw)">
+<b>Step 2 — Enable Firestore Database</b><br>
+<span style="color:var(--t3)">In your project → Build → Firestore Database → Create database → Start in test mode → Choose region (asia-south1 for India) → Done</span>
+</div>
+<div style="padding:12px;background:var(--s2);border-radius:8px;border-left:3px solid var(--gr)">
+<b>Step 3 — Get your Firebase Config</b><br>
+<span style="color:var(--t3)">Project Settings (⚙️ icon) → General → Your apps → Add app → Web (</> icon) → Register app → Copy the firebaseConfig object</span>
+</div>
+<div style="padding:12px;background:var(--s2);border-radius:8px;border-left:3px solid var(--ye)">
+<b>Step 4 — Paste config into this file</b><br>
+<span style="color:var(--t3)">Open this HTML file in Notepad/VS Code → Find the section marked "YOUR FIREBASE CONFIG" → Replace the placeholder values with your actual config values → Save → Reopen in browser</span>
+</div>
+<div style="padding:12px;background:var(--s2);border-radius:8px;border-left:3px solid var(--or)">
+<b>Step 5 — Set Firestore Rules (for security)</b><br>
+<span style="color:var(--t3)">Firestore → Rules → Paste this and Publish:</span>
+<pre style="background:var(--bg);padding:10px;border-radius:6px;margin-top:8px;font-size:12px;overflow-x:auto">rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true; // Change to auth-based later
+    }
+  }
+}</pre>
+</div>
+</div>
+<div style="margin-top:16px;padding:12px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:8px;color:var(--gr)">
+✅ Once configured, all data syncs automatically in real-time across any device — PC, mobile, tablet.
+</div>
+</div>
+<div class="mf"><button class="btn bp" onclick="closeFBGuide()">Got it!</button></div>
+</div>
+</div>
 
 <script>
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js');
-}
-  
+function closeFBGuide(e){if(e&&e.target!==document.getElementById("fb-guide-ov"))return;document.getElementById("fb-guide-ov").classList.remove("on");}
+function openFBGuide(){document.getElementById("fb-guide-ov").classList.add("on");}
 </script>
 </body>
 </html>
