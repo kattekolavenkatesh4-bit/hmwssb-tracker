@@ -511,7 +511,14 @@ function saveW(){
   if(cp==='wh'){rwl();if(selWh)rWhDet(selWh);rwAlert();}
   nc();toast(eWId?'Work updated!':'✅ Work added!');eWId=null;tph=[];
 }
-function delW(id){if(!confirm('Delete this work?'))return;works=works.filter(w=>w.id!==id);sv();rW(cp);nc();toast('Deleted.');}
+function delW(id){
+  if(!confirm('Delete this work?'))return;
+  works = works.filter(w => w.id !== id);
+  sv();
+  rW(cp);
+  nc();
+  toast('Deleted.');
+}
 function getMR(){return[...document.querySelectorAll('.mr')].map(r=>({name:r.querySelector('.mn').value.trim(),qty:Number(r.querySelector('.mq').value)||0,cost:Number(r.querySelector('.mc2').value)||0})).filter(m=>m.name);}
 function addMR(m={}){const d=document.createElement('div');d.className='mr';d.innerHTML=`<input type="text" class="fn mn" placeholder="Material name" value="${m.name||''}"><input type="number" class="fn mq" placeholder="Qty" value="${m.qty||''}"><input type="number" class="fn mc2" placeholder="Unit ₹" value="${m.cost||''}"><button class="db" onclick="this.parentElement.remove()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;document.getElementById('mwrap').appendChild(d);}
 function pickS(s){document.getElementById('fst').value=s;const m={'In Progress':'s-ip','Work Done':'s-wd','Geotag Pending':'s-gp','Geotag Done':'s-gd'};Object.values(m).forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('on');});const el=document.getElementById(m[s]);if(el)el.classList.add('on');}
