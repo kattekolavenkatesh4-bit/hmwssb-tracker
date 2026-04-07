@@ -2,8 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>HMWSSB Work Tracker</title>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Work Tracker">
+<meta name="theme-color" content="#0d1117">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0d1117;--s:#161b22;--s2:#1e2530;--bd:#2a3142;--bd2:#374151;--tx:#e6edf3;--t2:#8b949e;--t3:#6e7681;--ac:#1f6feb;--a2:#388bfd;--fw:#0ea5e9;--sw:#a855f7;--or:#f97316;--bl:#3b82f6;--re:#ef4444;--gr:#22c55e;--ye:#eab308;--r:10px}
@@ -698,7 +705,20 @@ function hPh(e){[...e.target.files].forEach(f=>{const r=new FileReader();r.onloa
 function rPh(){document.getElementById('ppp').innerHTML=tph.map(p=>`<img class="pt" src="${p}">`).join('');}
 
 // ═══ GEOTAG ═══
-function setG(v){document.getElementById('fg').value=v;const pr=document.getElementById('gprev');const lk=document.getElementById('gpl');if(v&&v.includes(',')){const[la,ln]=v.split(',').map(s=>s.trim());if(!isNaN(parseFloat(la))){lk.href='https://www.google.com/maps?q='+la+','+ln;pr.style.display='block';return;}}pr.style.display='none';}
+function setG(v) {
+  document.getElementById('fg').value = v;
+  const pr = document.getElementById('gprev');
+  const lk = document.getElementById('gpl');
+  if (v && v.includes(',')) {
+    const [la, ln] = v.split(',').map(s => s.trim());
+    if (!isNaN(parseFloat(la))) {
+      lk.href = `https://maps.google.com/?q=${la},${ln}`;
+      pr.style.display = 'block';
+      return;
+    }
+  }
+  pr.style.display = 'none';
+}
 function clearG(){setG('');document.getElementById('fgm').value='';document.getElementById('gsb').style.display='none';}
 function setGSB(t,m){const el=document.getElementById('gsb');if(!m){el.style.display='none';return;}el.style.display='flex';el.className='gsb g'+t[0];el.innerHTML=t==='fetch'?`<div class="sp"></div><span>${m}</span>`:`<span>${m}</span>`;}
 function capGPS(){if(!navigator.geolocation){setGSB('e','Geolocation not supported.');return;}const btn=document.getElementById('bgps');btn.style.opacity='.6';btn.style.pointerEvents='none';setGSB('fetch','Fetching GPS location…');navigator.geolocation.getCurrentPosition(p=>{btn.style.opacity='';btn.style.pointerEvents='';const v=`${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`;setG(v);document.getElementById('fgm').value=v;document.getElementById('fgm').style.display='block';setGSB('o','✅ Captured! ±'+Math.round(p.coords.accuracy)+'m');},e=>{btn.style.opacity='';btn.style.pointerEvents='';const m={1:'Permission denied.',2:'Signal unavailable.',3:'Timed out.'};setGSB('e','❌ '+m[e.code]);},{enableHighAccuracy:true,timeout:14000,maximumAge:0});}
@@ -926,6 +946,15 @@ service cloud.firestore {
 <script>
 function closeFBGuide(e){if(e&&e.target!==document.getElementById("fb-guide-ov"))return;document.getElementById("fb-guide-ov").classList.remove("on");}
 function openFBGuide(){document.getElementById("fb-guide-ov").classList.add("on");}
+
+// ── PWA Service Worker Registration ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('Service Worker registered'))
+      .catch(err => console.error('Service Worker failed', err));
+  });
+}
 </script>
 </body>
 </html>
