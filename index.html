@@ -941,9 +941,57 @@ document.addEventListener('click', e => {
   if(drop && !drop.contains(e.target)) document.getElementById('wic_list').classList.remove('show');
 });
 
-function openWIA(){eWhId=null;document.getElementById('wi-t').textContent='➕ Add New Material';['win','wis','wim','wip','wisp','wino','wic'].forEach(id=>document.getElementById(id).value='');refreshCats();document.getElementById('wic').value='Pipes';document.getElementById('wiu').value='nos';document.getElementById('wic_list').classList.remove('show');document.getElementById('wi-ov').classList.add('on');}
+// Global list of categories that persists
+let defaultCats = JSON.parse(localStorage.getItem('h_cats')) || ['Chambers','Fittings','Meters','Other','Pipes','Tools','Valves'];
 
-function openWIE(){const m=wh.find(x=>x.id===selWh);if(!m)return;eWhId=m.id;document.getElementById('wi-t').textContent='✏️ Edit Material';refreshCats();document.getElementById('win').value=m.name;document.getElementById('wic').value=m.cat;document.getElementById('wiu').value=m.unit;document.getElementById('wis').value=m.stock;document.getElementById('wim').value=m.min;document.getElementById('wip').value=m.price;document.getElementById('wisp').value=m.supplier||'';document.getElementById('wino').value=m.notes||'';document.getElementById('wic_list').classList.remove('show');document.getElementById('wi-ov').classList.add('on');}
+function refreshCats(){
+  const usedCats = wh.map(m=>m.cat);
+  let allCats = [...new Set([...defaultCats, ...usedCats])].filter(Boolean).sort();
+  
+  // 1. Update the left sidebar filter
+  const wcf = document.getElementById('wcf');
+  if(wcf) {
+    const vF = wcf.value;
+    wcf.innerHTML = '<option value="">All Categories</option>' + allCats.map(c => `<option>${c}</option>`).join('');
+    wcf.value = vF;
+  }
+  
+  // 2. Update the custom dropdown list
+  const list = document.getElementById('wic_list');
+  if(list) {
+    list.innerHTML = allCats.map(c => {
+       const inUse = usedCats.includes(c);
+       return `<div class="c-item" onclick="selectCat('${c}')">
+                 <span>${c}</span>
+                 <span class="c-del" onclick="delCat('${c}', event)" title="${inUse ? 'Cannot delete: Currently assigned to a material' : 'Delete category'}">${inUse ? '' : '✕'}</span>
+               </div>`;
+    }).join('');
+  }
+}
+
+// Custom Dropdown Controls
+function toggleCatList() { document.getElementById('wic_list').classList.toggle('show'); }
+function selectCat(val) { document.getElementById('wic').value = val; document.getElementById('wic_list').classList.remove('show'); }
+function delCat(val, e) {
+  e.stopPropagation(); // Prevents the dropdown from closing
+  if(wh.some(m => m.cat === val)) { toast('Cannot delete: Category is in use!', 'var(--or)'); return; }
+  defaultCats = defaultCats.filter(c => c !== val);
+  localStorage.setItem('h_cats', JSON.stringify(defaultCats));
+  refreshCats();
+  toast('Category deleted', 'var(--re)');
+}
+// Close dropdown if clicking outside
+document.addEventListener('click', e => {
+  const drop = document.getElementById('wic_drop');
+  if(drop && !drop.contains(e.target)) {
+    const list = document.getElementById('wic_list');
+    if(list) list.classList.remove('show');
+  }
+});
+
+function openWIA(){eWhId=null;document.getElementById('wi-t').textContent='➕ Add New Material';['win','wis','wim','wip','wisp','wino','wic'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});refreshCats();document.getElementById('wic').value='Pipes';document.getElementById('wiu').value='nos';const list=document.getElementById('wic_list');if(list)list.classList.remove('show');document.getElementById('wi-ov').classList.add('on');}
+
+function openWIE(){const m=wh.find(x=>x.id===selWh);if(!m)return;eWhId=m.id;document.getElementById('wi-t').textContent='✏️ Edit Material';refreshCats();document.getElementById('win').value=m.name;document.getElementById('wic').value=m.cat;document.getElementById('wiu').value=m.unit;document.getElementById('wis').value=m.stock;document.getElementById('wim').value=m.min;document.getElementById('wip').value=m.price;document.getElementById('wisp').value=m.supplier||'';document.getElementById('wino').value=m.notes||'';const list=document.getElementById('wic_list');if(list)list.classList.remove('show');document.getElementById('wi-ov').classList.add('on');}
 
 function closeWIOv(e){if(e&&e.target!==document.getElementById('wi-ov'))return;document.getElementById('wi-ov').classList.remove('on');eWhId=null;}
 
@@ -970,21 +1018,7 @@ function saveWI(){
   selWh=d.id; rWhDet(d.id);
   toast(wasEdit?'Material updated!':'✅ Material added!');
 }
-  const name=document.getElementById('win').value.trim();
-  if(!name){toast('Enter material name!','var(--re)');return;}
-  let cat=document.getElementById('wic').value;
-  if(cat==='_new_'){cat=document.getElementById('wic_new').value.trim();if(!cat){toast('Enter category name!','var(--re)');return;}}
-  const stock=Number(document.getElementById('wis').value)||0;
-  const wasEdit=!!eWhId;
-  const d={id:eWhId||nid(wh),name,cat:cat,unit:document.getElementById('wiu').value,stock,min:Number(document.getElementById('wim').value)||0,price:Number(document.getElementById('wip').value)||0,supplier:document.getElementById('wisp').value.trim(),notes:document.getElementById('wino').value.trim()};
-  if(eWhId){const i=wh.findIndex(x=>x.id===eWhId);if(i!==-1)wh[i]=d;}else{wh.push(d);if(stock>0){const entry={id:nid(log),matId:d.id,type:'in',qty:stock,balance:stock,date:new Date().toISOString().slice(0,10),ref:'Opening',note:'Initial entry'};log.push(entry);localStorage.setItem('h_log',JSON.stringify(log));if(window.fbSet)fbSet('stocklog',entry.id,entry);}}
-  localStorage.setItem('h_wh',JSON.stringify(wh));
-  if(window.fbSet) fbSet('warehouse',d.id,d);
-  document.getElementById('wi-ov').classList.remove('on');
-  eWhId=null; refreshCats(); rwl(); rwAlert(); nc();
-  selWh=d.id; rWhDet(d.id);
-  toast(wasEdit?'Material updated!':'✅ Material added!');
-}
+
 function delWI(){
   const m=wh.find(x=>x.id===selWh);
   if(!m||!confirm('Delete "'+m.name+'"?'))return;
@@ -1018,25 +1052,8 @@ function saveTxn(){const m=wh.find(x=>x.id===selWh);if(!m)return;const date=docu
 function toast(msg,col='var(--gr)'){const t=document.getElementById('toast');document.getElementById('tmsg').textContent=msg;document.getElementById('tdot').style.background=col;t.style.borderColor=col;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),3200);}
 
 // ═══ INIT ═══
-// Auto-cleans the dropdown: Removes any category that is no longer being used
-function refreshCats(){
-  let cats=[...new Set(wh.map(m=>m.cat))].filter(Boolean).sort();
-  if(cats.length===0) cats=['General'];
-  
-  const wcf=document.getElementById('wcf');
-  const vF=wcf.value;
-  wcf.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option>${c}</option>`).join('');
-  wcf.value=vF;
-  
-  const wic=document.getElementById('wic');
-  const vC=wic.value;
-  wic.innerHTML=cats.map(c=>`<option>${c}</option>`).join('')+'<option value="_new_" style="font-weight:bold;color:var(--a2)">➕ Add New Category...</option>';
-  if(vC&&cats.includes(vC))wic.value=vC;
-}
-
-// Restoring the missing Close/Cancel function
-function closeWIOv(e){if(e&&e.target!==document.getElementById('wi-ov'))return;document.getElementById('wi-ov').classList.remove('on');eWhId=null;}
-  gp('fw');
+refreshCats();
+gp('fw');
 </script>
 
 <!-- FIREBASE SETUP GUIDE MODAL -->
