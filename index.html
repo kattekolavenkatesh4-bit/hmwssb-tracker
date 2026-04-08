@@ -218,9 +218,38 @@ tbody tr:hover .ra{opacity:1}
 .toast.on{transform:translateX(0)}
 .td{width:8px;height:8px;border-radius:50%;background:var(--gr)}
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:4px}
-@media(max-width:860px){.sidebar{width:54px}.logo-name,.logo-sub,.nl,.nb span,.nc,.na{display:none}.main{margin-left:54px}.srow{grid-template-columns:repeat(2,1fr)!important}.fg{grid-template-columns:1fr}.fi.s2,.sh,.so2,.pd{grid-column:span 1}.wlay{grid-template-columns:1fr}.topbar{padding:0 12px;gap:8px}.ptitle{font-size:16px}.tabs{gap:4px}.tab{padding:5px 9px;font-size:11px}.page{padding:12px 12px}.tw-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}}
-</style>
-
+@media(max-width:860px){
+  /* Core Sidebar & Layout */
+  .sidebar{width:54px}
+  .logo-name,.logo-sub,.nl,.nb span,.nc,.na{display:none}
+  .main{margin-left:54px}
+  .topbar{padding:0 12px;gap:8px}
+  .ptitle{font-size:16px}
+  .tabs{gap:4px}
+  .tab{padding:5px 9px;font-size:11px}
+  .page{padding:12px 12px}
+  
+  /* Grids & Forms */
+  .srow{grid-template-columns:repeat(auto-fit, minmax(135px, 1fr))!important}
+  .fg{grid-template-columns:1fr}
+  .fi.s2,.sh,.so2,.pd{grid-column:span 1}
+  .tw-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  
+  /* FIX 1: Prevent Detail Panel from pushing off screen */
+  .dp{width:calc(100vw - 54px)}
+  
+  /* FIX 2: Allow Warehouse panels to stack cleanly without cutting off */
+  .wlay{grid-template-columns:1fr; height:auto; overflow:visible}
+  .wleft, .wright{height:auto; overflow:visible}
+  .witems{max-height:45vh; border-bottom:1px solid var(--bd); padding-bottom:12px; margin-bottom:12px}
+  .wdh{padding: 12px}
+  .stnum{font-size:56px}
+  .acts .btn{min-width: 100%; margin-bottom: 4px}
+  
+  /* FIX 3: Keep Modals inside the screen bounds */
+  .modal{margin:10px; max-width:calc(100vw - 20px)!important; max-height:85vh}
+  .mb{padding:14px}
+}
 <!-- Firebase SDKs -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
