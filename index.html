@@ -931,7 +931,7 @@ To enable cloud sync across PC and mobile, you need a free Firebase project. Fol
 service cloud.firestore {
   match /databases/{database}/documents {
     match /{document=**} {
-      allow read, write: if true; // Change to auth-based later
+      allow read, write: if false; // Change to auth-based later
     }
   }
 }</pre>
