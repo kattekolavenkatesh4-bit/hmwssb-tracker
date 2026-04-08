@@ -938,7 +938,24 @@ function saveTxn(){const m=wh.find(x=>x.id===selWh);if(!m)return;const date=docu
 function toast(msg,col='var(--gr)'){const t=document.getElementById('toast');document.getElementById('tmsg').textContent=msg;document.getElementById('tdot').style.background=col;t.style.borderColor=col;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),3200);}
 
 // ═══ INIT ═══
-refreshCats();
+// Auto-cleans the dropdown: Removes any category that is no longer being used
+function refreshCats(){
+  let cats=[...new Set(wh.map(m=>m.cat))].filter(Boolean).sort();
+  if(cats.length===0) cats=['General'];
+  
+  const wcf=document.getElementById('wcf');
+  const vF=wcf.value;
+  wcf.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option>${c}</option>`).join('');
+  wcf.value=vF;
+  
+  const wic=document.getElementById('wic');
+  const vC=wic.value;
+  wic.innerHTML=cats.map(c=>`<option>${c}</option>`).join('')+'<option value="_new_" style="font-weight:bold;color:var(--a2)">➕ Add New Category...</option>';
+  if(vC&&cats.includes(vC))wic.value=vC;
+}
+
+// Restoring the missing Close/Cancel function
+function closeWIOv(e){if(e&&e.target!==document.getElementById('wi-ov'))return;document.getElementById('wi-ov').classList.remove('on');eWhId=null;}
   gp('fw');
 </script>
 
