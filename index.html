@@ -252,6 +252,14 @@ tbody tr:hover .ra{opacity:1}
   .modal{margin:10px; max-width:calc(100vw - 20px)!important; max-height:85vh}
   .mb{padding:14px}
 }
+  /* Custom Category Dropdown UI */
+.c-list { position:absolute; top:65px; left:0; right:0; background:var(--s); border:1px solid var(--bd); border-radius:7px; z-index:1000; max-height:180px; overflow-y:auto; display:none; box-shadow:0 8px 24px rgba(0,0,0,0.6); }
+.c-list.show { display:block; }
+.c-item { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; font-size:13.5px; cursor:pointer; color:var(--tx); border-bottom:1px solid var(--bd); }
+.c-item:last-child { border-bottom:none; }
+.c-item:hover { background:var(--s2); }
+.c-del { color:var(--t3); font-size:14px; font-weight:bold; padding:0 4px; transition:color 0.15s; }
+.c-del:hover { color:var(--re); }
   </style>
 <!-- Firebase SDKs -->
 <script type="module">
@@ -552,7 +560,11 @@ const firebaseConfig = {
 <div class="mh"><div class="mt" id="wi-t">➕ Add Material</div><button class="mc" onclick="closeWIOv()">✕</button></div>
 <div class="mb"><div class="fg">
 <div class="fi s2"><label class="fl">Material Name *</label><input type="text" class="fn" id="win" placeholder="e.g. GI Pipe 4 inch"></div>
-<div class="fi"><label class="fl">Category</label><select class="fs2" id="wic" onchange="if(this.value==='_new_'){document.getElementById('wic_new').style.display='block';document.getElementById('wic_new').focus();}else{document.getElementById('wic_new').style.display='none';}"></select><input type="text" class="fn" id="wic_new" placeholder="Type new category..." style="display:none;margin-top:6px"></div>
+<div class="fi" style="position:relative" id="wic_drop">
+  <label class="fl">Category</label>
+  <input type="text" class="fs2" id="wic" placeholder="Type new or select..." autocomplete="off" onclick="toggleCatList()">
+  <div class="c-list" id="wic_list"></div>
+</div>
 <div class="fi"><label class="fl">Unit of Measure</label><select class="fs2" id="wiu"><option value="nos">nos (numbers)</option><option value="mtr">mtr (metres)</option><option value="kg">kg</option><option value="ltr">litres</option><option value="set">set</option><option value="box">box</option><option value="roll">roll</option></select></div>
 <div class="fi"><label class="fl">Opening Stock</label><input type="number" class="fn" id="wis" placeholder="0" min="0"></div>
 <div class="fi"><label class="fl">Min. Stock Level (alert below this)</label><input type="number" class="fn" id="wim" placeholder="e.g. 10" min="0"></div>
@@ -884,12 +896,80 @@ function qRem(id){
   toast('−1 removed from '+m.name,'var(--or)');
 }
 
-function refreshCats(){const cats=[...new Set([...['Pipes','Fittings','Valves','Meters','Chambers','Tools','Other'],...wh.map(m=>m.cat)])].sort();const wcf=document.getElementById('wcf');const vF=wcf.value;wcf.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option>${c}</option>`).join('');wcf.value=vF;const wic=document.getElementById('wic');const vC=wic.value;wic.innerHTML=cats.map(c=>`<option>${c}</option>`).join('')+'<option value="_new_" style="font-weight:bold;color:var(--a2)">➕ Add New Category...</option>';if(vC&&cats.includes(vC))wic.value=vC;}
+// Global list of categories that persists
+let defaultCats = JSON.parse(localStorage.getItem('h_cats')) || ['Chambers','Fittings','Meters','Other','Pipes','Tools','Valves'];
 
-function openWIA(){eWhId=null;document.getElementById('wi-t').textContent='➕ Add New Material';['win','wis','wim','wip','wisp','wino','wic_new'].forEach(id=>document.getElementById(id).value='');document.getElementById('wic_new').style.display='none';refreshCats();document.getElementById('wic').value='Pipes';document.getElementById('wiu').value='nos';document.getElementById('wi-ov').classList.add('on');}
+function refreshCats(){
+  const usedCats = wh.map(m=>m.cat);
+  let allCats = [...new Set([...defaultCats, ...usedCats])].filter(Boolean).sort();
+  
+  // 1. Update the left sidebar filter
+  const wcf = document.getElementById('wcf');
+  if(wcf) {
+    const vF = wcf.value;
+    wcf.innerHTML = '<option value="">All Categories</option>' + allCats.map(c => `<option>${c}</option>`).join('');
+    wcf.value = vF;
+  }
+  
+  // 2. Update the custom dropdown list
+  const list = document.getElementById('wic_list');
+  if(list) {
+    list.innerHTML = allCats.map(c => {
+       const inUse = usedCats.includes(c);
+       return `<div class="c-item" onclick="selectCat('${c}')">
+                 <span>${c}</span>
+                 <span class="c-del" onclick="delCat('${c}', event)" title="${inUse ? 'Cannot delete: Currently assigned to a material' : 'Delete category'}">${inUse ? '' : '✕'}</span>
+               </div>`;
+    }).join('');
+  }
+}
 
-function openWIE(){const m=wh.find(x=>x.id===selWh);if(!m)return;eWhId=m.id;document.getElementById('wi-t').textContent='✏️ Edit Material';refreshCats();document.getElementById('win').value=m.name;document.getElementById('wic_new').style.display='none';document.getElementById('wic_new').value='';const wic=document.getElementById('wic');if([...wic.options].some(o=>o.value===m.cat)){wic.value=m.cat;}else{wic.value='_new_';document.getElementById('wic_new').style.display='block';document.getElementById('wic_new').value=m.cat;}document.getElementById('wiu').value=m.unit;document.getElementById('wis').value=m.stock;document.getElementById('wim').value=m.min;document.getElementById('wip').value=m.price;document.getElementById('wisp').value=m.supplier||'';document.getElementById('wino').value=m.notes||'';document.getElementById('wi-ov').classList.add('on');}
+// Custom Dropdown Controls
+function toggleCatList() { document.getElementById('wic_list').classList.toggle('show'); }
+function selectCat(val) { document.getElementById('wic').value = val; document.getElementById('wic_list').classList.remove('show'); }
+function delCat(val, e) {
+  e.stopPropagation(); // Prevents the dropdown from closing
+  if(wh.some(m => m.cat === val)) { toast('Cannot delete: Category is in use!', 'var(--or)'); return; }
+  defaultCats = defaultCats.filter(c => c !== val);
+  localStorage.setItem('h_cats', JSON.stringify(defaultCats));
+  refreshCats();
+  toast('Category deleted', 'var(--re)');
+}
+// Close dropdown if clicking outside
+document.addEventListener('click', e => {
+  const drop = document.getElementById('wic_drop');
+  if(drop && !drop.contains(e.target)) document.getElementById('wic_list').classList.remove('show');
+});
+
+function openWIA(){eWhId=null;document.getElementById('wi-t').textContent='➕ Add New Material';['win','wis','wim','wip','wisp','wino','wic'].forEach(id=>document.getElementById(id).value='');refreshCats();document.getElementById('wic').value='Pipes';document.getElementById('wiu').value='nos';document.getElementById('wic_list').classList.remove('show');document.getElementById('wi-ov').classList.add('on');}
+
+function openWIE(){const m=wh.find(x=>x.id===selWh);if(!m)return;eWhId=m.id;document.getElementById('wi-t').textContent='✏️ Edit Material';refreshCats();document.getElementById('win').value=m.name;document.getElementById('wic').value=m.cat;document.getElementById('wiu').value=m.unit;document.getElementById('wis').value=m.stock;document.getElementById('wim').value=m.min;document.getElementById('wip').value=m.price;document.getElementById('wisp').value=m.supplier||'';document.getElementById('wino').value=m.notes||'';document.getElementById('wic_list').classList.remove('show');document.getElementById('wi-ov').classList.add('on');}
+
+function closeWIOv(e){if(e&&e.target!==document.getElementById('wi-ov'))return;document.getElementById('wi-ov').classList.remove('on');eWhId=null;}
+
 function saveWI(){
+  const name=document.getElementById('win').value.trim();
+  if(!name){toast('Enter material name!','var(--re)');return;}
+  const cat=document.getElementById('wic').value.trim();
+  if(!cat){toast('Enter or select a category!','var(--re)');return;}
+
+  // If user typed a brand new category, save it permanently
+  if(!defaultCats.includes(cat)) {
+      defaultCats.push(cat);
+      localStorage.setItem('h_cats', JSON.stringify(defaultCats));
+  }
+
+  const stock=Number(document.getElementById('wis').value)||0;
+  const wasEdit=!!eWhId;
+  const d={id:eWhId||nid(wh),name,cat:cat,unit:document.getElementById('wiu').value,stock,min:Number(document.getElementById('wim').value)||0,price:Number(document.getElementById('wip').value)||0,supplier:document.getElementById('wisp').value.trim(),notes:document.getElementById('wino').value.trim()};
+  if(eWhId){const i=wh.findIndex(x=>x.id===eWhId);if(i!==-1)wh[i]=d;}else{wh.push(d);if(stock>0){const entry={id:nid(log),matId:d.id,type:'in',qty:stock,balance:stock,date:new Date().toISOString().slice(0,10),ref:'Opening',note:'Initial entry'};log.push(entry);localStorage.setItem('h_log',JSON.stringify(log));if(window.fbSet)fbSet('stocklog',entry.id,entry);}}
+  localStorage.setItem('h_wh',JSON.stringify(wh));
+  if(window.fbSet) fbSet('warehouse',d.id,d);
+  document.getElementById('wi-ov').classList.remove('on');
+  eWhId=null; refreshCats(); rwl(); rwAlert(); nc();
+  selWh=d.id; rWhDet(d.id);
+  toast(wasEdit?'Material updated!':'✅ Material added!');
+}
   const name=document.getElementById('win').value.trim();
   if(!name){toast('Enter material name!','var(--re)');return;}
   let cat=document.getElementById('wic').value;
