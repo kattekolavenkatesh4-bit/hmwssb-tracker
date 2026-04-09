@@ -1036,7 +1036,17 @@ function delWI(){
 }
 
 function openTxn(type){const m=wh.find(x=>x.id===selWh);if(!m)return;txnT=type;document.getElementById('txnmn').textContent=m.name;document.getElementById('txncur').textContent=m.stock;document.getElementById('txnmu').textContent=m.unit;document.getElementById('txnd').value=new Date().toISOString().slice(0,10);['txnq','txns','txnr','txnno'].forEach(id=>document.getElementById(id).value='');document.getElementById('txntr').style.display='none';document.getElementById('txnqg').style.display=type==='adj'?'none':'flex';document.getElementById('txnsg').style.display=type==='adj'?'flex':'none';const tt={in:'📥 Add Stock to Warehouse',out:'📤 Remove Stock from Warehouse',adj:'🔧 Correct / Adjust Stock Count'};const tbl={in:'Add to Stock',out:'Remove from Stock',adj:'Save Correction'};document.getElementById('txnt').textContent=tt[type];document.getElementById('txnsb').textContent=tbl[type];document.getElementById('txnql').textContent=type==='in'?'Quantity to Add *':'Quantity to Remove *';document.getElementById('txn-ov').classList.add('on');}
-function closeTxnOv(e){if(e&&e.target!==document.getElementById('txn-ov'))return;document.getElementById('txn-ov').classList.remove('on');}
+function closeTxnOv(e){if(e&&e.target!==document.getElementById('txn-ov'))return;document.getElementById('txn-ov').classList.remove('on');
+  rWhDet(m.id);rwl();rwAlert();nc();if(m.stock<=m.min&&m.min>0)toast('⚠️ Low stock: '+m.name+' ('+m.stock+' '+m.unit+')','var(--or)');else toast('✅ '+m.name+': now '+ns+' '+m.unit,'var(--gr)');
+}
+
+// ═══ TOAST ═══
+function toast(msg,col='var(--gr)'){const t=document.getElementById('toast');document.getElementById('tmsg').textContent=msg;document.getElementById('tdot').style.background=col;t.style.borderColor=col;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),3200);}
+
+// ═══ INIT ═══
+refreshCats();
+gp('fw');
+</script>
 function setTT(t){txnT=t;['in','out','adj'].forEach(x=>{document.getElementById('tt-'+x).className='ttbn'+(t===x?' tt-'+t:'');});document.getElementById('txnqg').style.display=t==='adj'?'none':'flex';document.getElementById('txnsg').style.display=t==='adj'?'flex':'none';document.getElementById('txnql').textContent=t==='in'?'Quantity to Add *':'Quantity to Remove *';}
 function saveTxn(){const m=wh.find(x=>x.id===selWh);if(!m)return;const date=document.getElementById('txnd').value||new Date().toISOString().slice(0,10);const ref=document.getElementById('txnr').value.trim();const note=document.getElementById('txnno').value.trim();let change=0,ns=m.stock;if(txnT==='adj'){const sv=Number(document.getElementById('txns').value);if(isNaN(sv)||sv<0){toast('Enter valid count!','var(--re)');return;}change=sv-m.stock;ns=sv;}else{const qty=Number(document.getElementById('txnq').value);if(!qty||qty<=0){toast('Enter valid quantity!','var(--re)');return;}if(txnT==='out'&&qty>m.stock){toast('Only '+m.stock+' '+m.unit+' available!','var(--re)');return;}change=txnT==='in'?qty:-qty;ns=m.stock+change;}m.stock=ns;log.push({id:nid(log),matId:m.id,type:txnT==='adj'?'adj':txnT==='in'?'in':'out',qty:change,balance:ns,date,ref,note});// Save locally and to Firebase
   localStorage.setItem('h_wh',JSON.stringify(wh));
