@@ -281,6 +281,49 @@ window.addEventListener('load',()=>{
     },500);
 });
 </script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js"></script>  
+<script>
+const GOOGLE_CLIENT_ID =
+'468353902970-purkc7t12j2ljh7qj474kabp9saruqdf.apps.googleusercontent.com';
+
+const GOOGLE_SCOPE =
+'https://www.googleapis.com/auth/drive.appdata';
+
+let googleToken = null;
+
+async function googleLogin() {
+
+    return new Promise((resolve,reject)=>{
+
+        const tokenClient =
+        google.accounts.oauth2.initTokenClient({
+
+            client_id: GOOGLE_CLIENT_ID,
+
+            scope: GOOGLE_SCOPE,
+
+            callback:(response)=>{
+                googleToken=response.access_token;
+
+                localStorage.setItem(
+                    'google_token',
+                    googleToken
+                );
+
+                setSyncStatus(
+                    'ok',
+                    'Google Connected'
+                );
+
+                resolve();
+            }
+        });
+
+        tokenClient.requestAccessToken();
+    });
+}
+</script>  
 </head>
 <body>
 
@@ -307,7 +350,7 @@ window.addEventListener('load',()=>{
 <button class="tab" id="tab-mat" onclick="gp('mat')">📦 Materials</button>
 <button class="tab" id="tab-wh" onclick="gp('wh')">🏭 Warehouse</button>
 </div>
-<span id="sync-status" onclick="alert('Data is currently stored locally on this device.')" style="font-size:11.5px;color:var(--t3);white-space:nowrap;margin-right:4px;cursor:pointer;padding:4px 8px;border-radius:5px;border:1px solid var(--bd);background:var(--s)" title="Click for Firebase setup guide">💾 Local Storage</span><button class="btn bp" id="addbtn" onclick="openWM()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Work</button>
+<span id="sync-status" onclick="googleLogin()" style="font-size:11.5px;color:var(--t3);white-space:nowrap;margin-right:4px;cursor:pointer;padding:4px 8px;border-radius:5px;border:1px solid var(--bd);background:var(--s)" title="Click for Firebase setup guide">🔐 Connect Google</span><button class="btn bp" id="addbtn" onclick="openWM()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Work</button>
 </header>
 
 <div class="page on" id="page-fw"></div>
