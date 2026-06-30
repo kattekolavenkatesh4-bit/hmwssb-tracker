@@ -323,6 +323,62 @@ async function googleLogin() {
         tokenClient.requestAccessToken();
     });
 }
+async function uploadToDrive(filename,data){
+
+    if(!googleToken){
+        console.log("Google not connected");
+        return;
+    }
+
+    const metadata={
+        name:filename,
+        parents:['appDataFolder']
+    };
+
+    const form=new FormData();
+
+    form.append(
+        'metadata',
+        new Blob(
+            [JSON.stringify(metadata)],
+            {type:'application/json'}
+        )
+    );
+
+    form.append(
+        'file',
+        new Blob(
+            [JSON.stringify(data)],
+            {type:'application/json'}
+        )
+    );
+
+    try{
+
+        const res=await fetch(
+            'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+            {
+                method:'POST',
+                headers:{
+                    Authorization:`Bearer ${googleToken}`
+                },
+                body:form
+            }
+        );
+
+        if(res.ok){
+            setSyncStatus('ok','Drive Backup Complete');
+        }
+        else{
+            setSyncStatus('error','Drive Backup Failed');
+            console.log(await res.text());
+        }
+
+    }catch(err){
+        console.error(err);
+        setSyncStatus('error','Drive Backup Failed');
+    }
+}  
 </script>  
 </head>
 <body>
@@ -516,16 +572,34 @@ let tph=[];
 
 
 function sv(){
-  localStorage.setItem('h_w',JSON.stringify(works));
-  setSyncStatus('ok','Works saved');
+    localStorage.setItem('h_w',JSON.stringify(works));
+
+    setSyncStatus('syncing','Backing up works...');
+
+    uploadToDrive(
+        'works.json',
+        works
+    );
 }
 function svW(){
-  localStorage.setItem('h_wh',JSON.stringify(wh));
-  setSyncStatus('ok','Warehouse saved');
+    localStorage.setItem('h_wh',JSON.stringify(wh));
+
+    setSyncStatus('syncing','Backing up warehouse...');
+
+    uploadToDrive(
+        'warehouse.json',
+        wh
+    );
 }
 function svL(){
-  localStorage.setItem('h_log',JSON.stringify(log));
-  setSyncStatus('ok','Stock log saved');
+    localStorage.setItem('h_log',JSON.stringify(log));
+
+    setSyncStatus('syncing','Backing up stock log...');
+
+    uploadToDrive(
+        'stocklog.json',
+        log
+    );
 }
 function nid(a){return a.length?Math.max(...a.map(x=>x.id))+1:1}
 
