@@ -505,32 +505,7 @@ async function restoreFromDrive(){
     const cloudWh=
         await downloadFromDrive('warehouse.json');
 
-    if(cloudWh){
-        wh=cloudWh;
-        localStorage.setItem(
-            'h_wh',
-            JSON.stringify(wh)
-        );
-    }
-
-    const cloudLog=
-        await downloadFromDrive('stocklog.json');
-
-    if(cloudLog){
-        log=cloudLog;
-        localStorage.setItem(
-            'h_log',
-            JSON.stringify(log)
-        );
-    }
-
-    setSyncStatus(
-        'ok',
-        'Cloud Restored'
-    );
-
-    location.reload();
-}  
+ 
 </script>  
 </head>
 <body>
@@ -725,7 +700,6 @@ let tph=[];
 
 function sv(){
     localStorage.setItem('h_w',JSON.stringify(works));
-  sv();
 
     setSyncStatus('syncing','Backing up works...');
 
@@ -836,6 +810,7 @@ function saveW(){
   const prev=eWId?(works.find(w=>w.id===eWId)?.materials||[]):[];
   if(eWId){const i=works.findIndex(w=>w.id===eWId);if(i!==-1)works[i]=d;}else works.unshift(d);
   localStorage.setItem('h_w',JSON.stringify(works));
+  sv();
   prev.forEach(pm=>{const m=wh.find(x=>x.name.toLowerCase()===pm.name.toLowerCase());if(m){m.stock+=pm.qty;log.push({id:nid(log),matId:m.id,type:'adj',qty:+pm.qty,balance:m.stock,date:new Date().toISOString().slice(0,10),ref:'Work#'+d.id,note:'Edit reversal'});}});
   mats.forEach(m=>{if(!m.name||m.qty<=0)return;const wm=wh.find(x=>x.name.toLowerCase()===m.name.toLowerCase());if(wm){const dq=Math.min(m.qty,wm.stock);wm.stock-=dq;log.push({id:nid(log),matId:wm.id,type:'auto',qty:-dq,balance:wm.stock,date:d.date||new Date().toISOString().slice(0,10),ref:'Work#'+d.id,note:'Auto: '+d.name});if(wm.stock<=wm.min&&wm.min>0)setTimeout(()=>toast('⚠️ Low stock: '+wm.name+' ('+wm.stock+' '+wm.unit+')','var(--or)'),1400);}});
   localStorage.setItem('h_wh',JSON.stringify(wh));
