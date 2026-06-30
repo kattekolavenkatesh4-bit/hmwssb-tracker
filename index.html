@@ -252,149 +252,34 @@ tbody tr:hover .ra{opacity:1}
 .c-del { color:var(--t3); font-size:14px; font-weight:bold; padding:0 4px; transition:color 0.15s; }
 .c-del:hover { color:var(--re); }
 </style>
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<script>
+function setSyncStatus(state,msg){
+    const el=document.getElementById('sync-status');
+    if(!el)return;
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyC2Wn0eGrrWi6d5A_4kYg6FNChsPrClVPk",
-    authDomain: "hmwssb-tracking.firebaseapp.com",
-    projectId: "hmwssb-tracking",
-    storageBucket: "hmwssb-tracking.firebasestorage.app",
-    messagingSenderId: "468353902970",
-    appId: "1:468353902970:web:10a20c6dfc6a968a200ec3",
-    measurementId: "G-K4GQFDTBKN"
-  };
+    const colors={
+        ok:'#22c55e',
+        syncing:'#f97316',
+        error:'#ef4444',
+        offline:'#6e7681'
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  window._db = db;
-  window._fs = { collection, doc, setDoc, getDocs, deleteDoc, onSnapshot, writeBatch };
-  window._fbReady = true;
+    const icons={
+        ok:'💾',
+        syncing:'🔄',
+        error:'⚠️',
+        offline:'📴'
+    };
 
-  function setSyncStatus(state, msg) {
-    const el = document.getElementById('sync-status');
-    if (!el) return;
-    const colors = { ok: '#22c55e', syncing: '#f97316', error: '#ef4444', offline: '#6e7681' };
-    const icons  = { ok: '☁️', syncing: '🔄', error: '⚠️', offline: '📴' };
-    el.style.color = colors[state] || '#6e7681';
-    el.textContent = (icons[state] || '') + ' ' + msg;
-  }
-  window.setSyncStatus = setSyncStatus;
+    el.style.color=colors[state] || '#6e7681';
+    el.textContent=(icons[state] || '')+' '+msg;
+}
 
-  async function fbSet(col, id, data) {
-    try {
-      setSyncStatus('syncing', 'Saving…');
-      await setDoc(doc(db, col, String(id)), data);
-      setSyncStatus('ok', 'Synced');
-    } catch(e) {
-      setSyncStatus('error', 'Sync failed');
-      console.error('fbSet error:', e);
-    }
-  }
-  window.fbSet = fbSet;
-
-  async function fbDel(col, id) {
-    try {
-      await deleteDoc(doc(db, col, String(id)));
-    } catch(e) { console.error('fbDel error:', e); }
-  }
-  window.fbDel = fbDel;
-
-  function startListeners() {
-    onSnapshot(collection(db, 'works'), snap => {
-      snap.docChanges().forEach(change => {
-        const data = change.doc.data();
-        if (change.type === 'added' || change.type === 'modified') {
-          const idx = works.findIndex(w => String(w.id) === change.doc.id);
-          if (idx !== -1) works[idx] = data; else works.unshift(data);
-        } else if (change.type === 'removed') {
-          works = works.filter(w => String(w.id) !== change.doc.id);
-        }
-      });
-      localStorage.setItem('h_w', JSON.stringify(works));
-      if (cp === 'fw' || cp === 'sw') rW(cp); nc();
-    });
-
-    onSnapshot(collection(db, 'warehouse'), snap => {
-      snap.docChanges().forEach(change => {
-        const data = change.doc.data();
-        if (change.type === 'added' || change.type === 'modified') {
-          const idx = wh.findIndex(m => String(m.id) === change.doc.id);
-          if (idx !== -1) wh[idx] = data; else wh.push(data);
-        } else if (change.type === 'removed') {
-          wh = wh.filter(m => String(m.id) !== change.doc.id);
-        }
-      });
-      localStorage.setItem('h_wh', JSON.stringify(wh));
-      if (cp === 'wh') { rwl(); rwAlert(); if (selWh) rWhDet(selWh); } nc();
-    });
-
-    onSnapshot(collection(db, 'stocklog'), snap => {
-      snap.docChanges().forEach(change => {
-        const data = change.doc.data();
-        if (change.type === 'added' || change.type === 'modified') {
-          const idx = log.findIndex(l => String(l.id) === change.doc.id);
-          if (idx !== -1) log[idx] = data; else log.push(data);
-        } else if (change.type === 'removed') {
-          log = log.filter(l => String(l.id) !== change.doc.id);
-        }
-      });
-      localStorage.setItem('h_log', JSON.stringify(log));
-      if (cp === 'wh' && selWh) rWhDet(selWh);
-    });
-
-    setSyncStatus('ok', 'Live sync on');
-  }
-
-  async function initialLoad() {
-    setSyncStatus('syncing', 'Loading…');
-    try {
-      const [wSnap, whSnap, logSnap] = await Promise.all([
-        getDocs(collection(db, 'works')),
-        getDocs(collection(db, 'warehouse')),
-        getDocs(collection(db, 'stocklog'))
-      ]);
-
-      if (!wSnap.empty) {
-        works = wSnap.docs.map(d => d.data());
-        localStorage.setItem('h_w', JSON.stringify(works));
-      } else if (works.length > 0) {
-        const batch = writeBatch(db);
-        works.forEach(w => batch.set(doc(db, 'works', String(w.id)), w));
-        await batch.commit();
-      }
-
-      if (!whSnap.empty) {
-        wh = whSnap.docs.map(d => d.data());
-        localStorage.setItem('h_wh', JSON.stringify(wh));
-      } else if (wh.length > 0) {
-        const batch = writeBatch(db);
-        wh.forEach(m => batch.set(doc(db, 'warehouse', String(m.id)), m));
-        await batch.commit();
-      }
-
-      if (!logSnap.empty) {
-        log = logSnap.docs.map(d => d.data());
-        localStorage.setItem('h_log', JSON.stringify(log));
-      } else if (log.length > 0) {
-        const batch = writeBatch(db);
-        log.forEach(l => batch.set(doc(db, 'stocklog', String(l.id)), l));
-        await batch.commit();
-      }
-
-      if (cp === 'fw' || cp === 'sw') rW(cp);
-      if (cp === 'mat') rMat();
-      if (cp === 'wh') { rwl(); rwAlert(); }
-      nc();
-      setSyncStatus('ok', 'Synced');
-      startListeners();
-    } catch(e) {
-      console.warn('Firebase load failed, using local data:', e);
-      setSyncStatus('offline', 'Offline mode');
-    }
-  }
-  window.addEventListener('load', () => setTimeout(initialLoad, 500));
+window.addEventListener('load',()=>{
+    setTimeout(()=>{
+        setSyncStatus('ok','Local storage active');
+    },500);
+});
 </script>
 </head>
 <body>
@@ -422,7 +307,7 @@ tbody tr:hover .ra{opacity:1}
 <button class="tab" id="tab-mat" onclick="gp('mat')">📦 Materials</button>
 <button class="tab" id="tab-wh" onclick="gp('wh')">🏭 Warehouse</button>
 </div>
-<span id="sync-status" onclick="openFBGuide()" style="font-size:11.5px;color:var(--t3);white-space:nowrap;margin-right:4px;cursor:pointer;padding:4px 8px;border-radius:5px;border:1px solid var(--bd);background:var(--s)" title="Click for Firebase setup guide">📴 Not configured</span><button class="btn bp" id="addbtn" onclick="openWM()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Work</button>
+<span id="sync-status" onclick="alert('Data is currently stored locally on this device.')" style="font-size:11.5px;color:var(--t3);white-space:nowrap;margin-right:4px;cursor:pointer;padding:4px 8px;border-radius:5px;border:1px solid var(--bd);background:var(--s)" title="Click for Firebase setup guide">💾 Local Storage</span><button class="btn bp" id="addbtn" onclick="openWM()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Work</button>
 </header>
 
 <div class="page on" id="page-fw"></div>
@@ -589,15 +474,15 @@ let tph=[];
 
 function sv(){
   localStorage.setItem('h_w',JSON.stringify(works));
-  if(window.fbSet) works.forEach(w=>fbSet('works',w.id,w));
+  setSyncStatus('ok','Works saved');
 }
 function svW(){
   localStorage.setItem('h_wh',JSON.stringify(wh));
-  if(window.fbSet) wh.forEach(m=>fbSet('warehouse',m.id,m));
+  setSyncStatus('ok','Warehouse saved');
 }
 function svL(){
   localStorage.setItem('h_log',JSON.stringify(log));
-  if(window.fbSet) log.forEach(l=>fbSet('stocklog',l.id,l));
+  setSyncStatus('ok','Stock log saved');
 }
 function nid(a){return a.length?Math.max(...a.map(x=>x.id))+1:1}
 
