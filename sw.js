@@ -1,5 +1,5 @@
 const CACHE_NAME = "hmwssb-app-v1";
-const urlsToCache = ["index.html"];
+const urlsToCache = [   "index.html",   "manifest.json",   "icon-192.png" ];
 
 self.addEventListener("install", event => {
   event.waitUntil(
