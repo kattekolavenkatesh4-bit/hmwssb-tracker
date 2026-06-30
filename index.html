@@ -276,9 +276,13 @@ function setSyncStatus(state,msg){
 }
 
 window.addEventListener('load',()=>{
-    setTimeout(()=>{
-        setSyncStatus('ok','Local storage active');
-    },500);
+    const savedToken = localStorage.getItem('google_token');
+
+    if(savedToken){
+        setSyncStatus('ok','Google Connected');
+    }else{
+        setSyncStatus('offline','Connect Google');
+    }
 });
 </script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -310,6 +314,8 @@ async function googleLogin() {
                     'google_token',
                     googleToken
                 );
+              let googleToken = null;
+              googleToken = localStorage.getItem('google_token');
 
                 
               setSyncStatus(
