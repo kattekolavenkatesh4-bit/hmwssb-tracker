@@ -303,7 +303,7 @@ async function googleLogin() {
 
             scope: GOOGLE_SCOPE,
 
-            callback:(response)=>{
+            callback: async (response)=>{
                 googleToken=response.access_token;
 
                 localStorage.setItem(
@@ -311,12 +311,15 @@ async function googleLogin() {
                     googleToken
                 );
 
-                setSyncStatus(
-                    'ok',
-                    'Google Connected'
-                );
+                
+              setSyncStatus(
+    'ok',
+    'Google Connected'
+);
 
-                resolve();
+await restoreFromDrive();
+
+resolve();
             }
         });
 
@@ -325,40 +328,61 @@ async function googleLogin() {
 }
 async function uploadToDrive(filename,data){
 
-    if(!googleToken){
-        console.log("Google not connected");
-        return;
-    }
-
-    const metadata={
-        name:filename,
-        parents:['appDataFolder']
-    };
-
-    const form=new FormData();
-
-    form.append(
-        'metadata',
-        new Blob(
-            [JSON.stringify(metadata)],
-            {type:'application/json'}
-        )
-    );
-
-    form.append(
-        'file',
-        new Blob(
-            [JSON.stringify(data)],
-            {type:'application/json'}
-        )
-    );
+    if(!googleToken)return;
 
     try{
 
-        const res=await fetch(
-            'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+        const list=await fetch(
+            `https://www.googleapis.com/drive/v3/files?q=name='${filename}' and 'appDataFolder' in parents&spaces=appDataFolder`,
             {
-                method:'POST',
+                headers:{
+                    Authorization:`Bearer ${googleToken}`
+                }
+            }
+        );
+
+        const files=(await list.json()).files||[];
+
+        const metadata={
+            name:filename,
+            parents:['appDataFolder']
+        };
+
+        const form=new FormData();
+
+        form.append(
+            'metadata',
+            new Blob(
+                [JSON.stringify(metadata)],
+                {type:'application/json'}
+            )
+        );
+
+        form.append(
+            'file',
+            new Blob(
+                [JSON.stringify(data)],
+                {type:'application/json'}
+            )
+        );
+
+        let url=
+            'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+
+        let method='POST';
+
+        if(files.length){
+
+            url=
+                `https://www.googleapis.com/upload/drive/v3/files/${files[0].id}?uploadType=multipart`;
+
+            method='PATCH';
+        }
+
+        const res=await fetch(
+            url,
+            {
+                method,
                 headers:{
                     Authorization:`Bearer ${googleToken}`
                 },
@@ -367,17 +391,98 @@ async function uploadToDrive(filename,data){
         );
 
         if(res.ok){
-            setSyncStatus('ok','Drive Backup Complete');
+            setSyncStatus('ok','Google Synced');
         }
         else{
-            setSyncStatus('error','Drive Backup Failed');
+            setSyncStatus('error','Sync Failed');
             console.log(await res.text());
         }
 
     }catch(err){
         console.error(err);
-        setSyncStatus('error','Drive Backup Failed');
+        setSyncStatus('error','Sync Failed');
     }
+}
+async function downloadFromDrive(filename){
+
+    if(!googleToken)return null;
+
+    try{
+
+        const list=await fetch(
+            `https://www.googleapis.com/drive/v3/files?q=name='${filename}' and 'appDataFolder' in parents&spaces=appDataFolder`,
+            {
+                headers:{
+                    Authorization:`Bearer ${googleToken}`
+                }
+            }
+        );
+
+        const files=(await list.json()).files||[];
+
+        if(!files.length)return null;
+
+        const res=await fetch(
+            `https://www.googleapis.com/drive/v3/files/${files[0].id}?alt=media`,
+            {
+                headers:{
+                    Authorization:`Bearer ${googleToken}`
+                }
+            }
+        );
+
+        return await res.json();
+
+    }catch(err){
+        console.error(err);
+        return null;
+    }
+}  
+async function restoreFromDrive(){
+
+    const cloudWorks=
+        await downloadFromDrive('works.json');
+
+  
+        cloudWorks.forEach(cw => {
+    if(!works.find(w => w.id === cw.id)){
+        works.push(cw);
+    }
+});;
+        localStorage.setItem(
+            'h_w',
+            JSON.stringify(works)
+        );
+    }
+
+    const cloudWh=
+        await downloadFromDrive('warehouse.json');
+
+    if(cloudWh){
+        wh=cloudWh;
+        localStorage.setItem(
+            'h_wh',
+            JSON.stringify(wh)
+        );
+    }
+
+    const cloudLog=
+        await downloadFromDrive('stocklog.json');
+
+    if(cloudLog){
+        log=cloudLog;
+        localStorage.setItem(
+            'h_log',
+            JSON.stringify(log)
+        );
+    }
+
+    setSyncStatus(
+        'ok',
+        'Cloud Restored'
+    );
+
+    location.reload();
 }  
 </script>  
 </head>
@@ -601,7 +706,7 @@ function svL(){
         log
     );
 }
-function nid(a){return a.length?Math.max(...a.map(x=>x.id))+1:1}
+function nid(){     return Date.now() + Math.floor(Math.random()*10000); }
 
 // ═══ PAGE NAV ═══
 function gp(p){
