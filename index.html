@@ -123,7 +123,8 @@ tbody tr:hover .ra{opacity:1}
 .pd{border:2px dashed var(--bd2);border-radius:8px;padding:22px;text-align:center;cursor:pointer;transition:border-color .15s;grid-column:span 2}
 .pd:hover{border-color:var(--ac)}
 .pp{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.pt{width:64px;height:64px;border-radius:6px;object-fit:cover;border:1px solid var(--bd)}
+.pt{width:64px;height:64px;border-radius:6px;object-fit:cover;border:1px solid var(--bd);cursor:pointer;transition:opacity 0.2s;}
+.pt:hover{opacity:0.8;}
 .mr{display:grid;grid-template-columns:1fr 80px 90px 28px;gap:8px;align-items:center}
 .ar{display:inline-flex;align-items:center;gap:6px;color:var(--a2);font-size:13px;font-weight:500;cursor:pointer;background:none;border:none;padding:4px 0;font-family:'DM Sans',sans-serif}
 .ar:hover{color:var(--ac)}
@@ -251,6 +252,9 @@ tbody tr:hover .ra{opacity:1}
 .c-item:hover { background:var(--s2); }
 .c-del { color:var(--t3); font-size:14px; font-weight:bold; padding:0 4px; transition:color 0.15s; }
 .c-del:hover { color:var(--re); }
+/* Full Screen Image Modal */
+#img-fs { max-width:100%; max-height:90vh; border-radius:8px; object-fit:contain; box-shadow:0 10px 30px rgba(0,0,0,0.5); }
+.close-img { position:absolute; top:-15px; right:-15px; background:var(--re); color:#fff; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-weight:bold; font-size:14px; display:flex; align-items:center; justify-content:center; }
 </style>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -575,6 +579,14 @@ tbody tr:hover .ra{opacity:1}
 <div class="dh"><button class="ib" onclick="closeDP()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"/><line x1="5" y1="5" x2="19" y2="19"/></svg></button><div style="flex:1"><div id="dp-ti" style="font-weight:700;font-size:15px"></div><div id="dp-ty" style="font-size:12px;color:var(--t3)"></div></div><button class="btn bg" style="font-size:12px" onclick="editW(curDP)">Edit</button></div>
 <div class="db2" id="dpb"></div></div>
 
+<!-- Image Viewer Modal -->
+<div class="ov" id="img-ov" onclick="closeImgOv()" style="z-index:900">
+  <div style="max-width:95vw;max-height:95vh;position:relative;" onclick="event.stopPropagation()">
+    <button class="close-img" onclick="closeImgOv()">✕</button>
+    <img id="img-fs" src="">
+  </div>
+</div>
+
 <div class="toast" id="toast"><div class="td" id="tdot"></div><span id="tmsg"></span></div>
 
 <script>
@@ -585,7 +597,6 @@ let log=JSON.parse(localStorage.getItem('h_log')||'[]');
 let cp='fw',curDP=null,eWId=null,eWhId=null,selWh=null,txnT='in',mmo='all';
 let vw={fw:'table',sw:'table'},srt={fw:{f:'date',d:-1},sw:{f:'date',d:-1}};
 let tph=[];
-
 
 function sv(){
   localStorage.setItem('h_w',JSON.stringify(works));
@@ -600,6 +611,15 @@ function svL(){
   if(window.fbSet) log.forEach(l=>fbSet('stocklog',l.id,l));
 }
 function nid(a){return a.length?Math.max(...a.map(x=>x.id))+1:1}
+
+// ═══ IMAGE VIEWER ═══
+function openImg(src) {
+  document.getElementById('img-fs').src = src;
+  document.getElementById('img-ov').classList.add('on');
+}
+function closeImgOv() {
+  document.getElementById('img-ov').classList.remove('on');
+}
 
 // ═══ PAGE NAV ═══
 function gp(p){
@@ -665,7 +685,7 @@ ${vw[t]==='table'?`<div class="tw"><div class="tw-scroll"><table><thead><tr><th>
 function nc(){document.getElementById('nc-fw').textContent=works.filter(w=>w.type==='Freshwater').length;document.getElementById('nc-sw').textContent=works.filter(w=>w.type==='Sewerage').length;const lw=wh.filter(m=>m.stock<=m.min).length;const b=document.getElementById('nc-wh');b.style.display=lw>0?'inline-flex':'none';b.textContent=lw;}
 
 // ═══ DETAIL PANEL ═══
-function openDP(id){const w=works.find(x=>x.id===id);if(!w)return;curDP=id;document.getElementById('dp-ti').textContent=w.name;document.getElementById('dp-ty').textContent=w.type+' Work';document.getElementById('dpb').innerHTML=`<div class="ds"><div class="dst">Status</div>${sp(w.status)}</div><div class="ds"><div class="dst">Location</div><div style="margin-bottom:8px"><div style="font-size:11.5px;color:var(--t3)">Area</div><div style="font-size:13.5px;font-weight:500">${w.area||'—'}</div></div><div style="margin-bottom:8px"><div style="font-size:11.5px;color:var(--t3)">Address</div><div style="font-size:13.5px;font-weight:500">${[w.house?'#'+w.house:'',w.colony].filter(Boolean).join(', ')||'—'}</div></div><div><div style="font-size:11.5px;color:var(--t3)">Geotag</div><div style="margin-top:3px">${gl(w.geo)}</div></div></div><div class="ds"><div class="dst">Reference</div><div style="margin-bottom:8px"><div style="font-size:11.5px;color:var(--t3)">Govt. Tag</div><div style="font-size:13.5px">${w.govtag?`<span class="gt">${w.govtag}</span>`:'—'}</div></div><div style="margin-bottom:8px"><div style="font-size:11.5px;color:var(--t3)">Date</div><div style="font-size:13.5px;font-weight:500">${w.date?new Date(w.date).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}):'—'}</div></div><div><div style="font-size:11.5px;color:var(--t3)">Revenue</div><div style="font-size:16px;font-weight:700;color:var(--gr)">₹${Number(w.revenue||0).toLocaleString('en-IN')}</div></div></div><div class="ds"><div class="dst">Materials (${(w.materials||[]).length})</div>${(w.materials||[]).length?`<table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr style="color:var(--t3)"><th style="text-align:left;padding:4px">Material</th><th style="text-align:right;padding:4px">Qty</th><th style="text-align:right;padding:4px">Total</th></tr>${w.materials.map(m=>`<tr style="border-top:1px solid var(--bd)"><td style="padding:5px 4px">${m.name}</td><td style="text-align:right;padding:5px 4px">${m.qty}</td><td style="text-align:right;padding:5px 4px">₹${(m.qty*m.cost).toLocaleString('en-IN')}</td></tr>`).join('')}<tr style="border-top:1px solid var(--bd2);font-weight:700;color:var(--re)"><td colspan="2" style="padding:6px 4px">Total</td><td style="text-align:right;padding:6px 4px">₹${w.materials.reduce((s,m)=>s+m.qty*m.cost,0).toLocaleString('en-IN')}</td></tr></table>`:'<span style="color:var(--t3);font-size:13px">No materials.</span>'}</div><div class="ds"><div class="dst">Photos (${(w.photos||[]).length})</div><div style="display:flex;flex-wrap:wrap;gap:8px">${(w.photos||[]).length?w.photos.map(p=>`<img src="${p}" style="width:80px;height:80px;border-radius:7px;object-fit:cover;border:1px solid var(--bd)">`).join(''):'<span style="color:var(--t3);font-size:13px">No photos.</span>'}</div></div>`;document.getElementById('dp').classList.add('on');}
+function openDP(id){const w=works.find(x=>x.id===id);if(!w)return;curDP=id;document.getElementById('dp-ti').textContent=w.name;document.getElementById('dp-ty').textContent=w.type+' Work';document.getElementById('dpb').innerHTML=`<div class="ds"><div class="dst">Status</div>${sp(w.status)}</div><div class="ds"><div class="dst">Location</div><div style="margin-bottom:8px"><div style="font-size:11.5px;color:var(--t3)">Area</div><div style="font-size:13.5px;font-weight:500">${w.area||'—'}</div></div><div style="margin-bottom:8px"><div style="font-size:11.5px;color:var(--t3)">Address</div><div style="font-size:13.5px;font-weight:500">${[w.house?'#'+w.house:'',w.colony].filter(Boolean).join(', ')||'—'}</div></div><div><div style="font-size:11.5px;color:var(--t3)">Geotag</div><div style="margin-top:3px">${gl(w.geo)}</div></div></div><div class="ds"><div class="dst">Reference</div><div style="margin-bottom:8px"><div style="font-size:11.5px;color:var(--t3)">Govt. Tag</div><div style="font-size:13.5px">${w.govtag?`<span class="gt">${w.govtag}</span>`:'—'}</div></div><div style="margin-bottom:8px"><div style="font-size:11.5px;color:var(--t3)">Date</div><div style="font-size:13.5px;font-weight:500">${w.date?new Date(w.date).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}):'—'}</div></div><div><div style="font-size:11.5px;color:var(--t3)">Revenue</div><div style="font-size:16px;font-weight:700;color:var(--gr)">₹${Number(w.revenue||0).toLocaleString('en-IN')}</div></div></div><div class="ds"><div class="dst">Materials (${(w.materials||[]).length})</div>${(w.materials||[]).length?`<table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr style="color:var(--t3)"><th style="text-align:left;padding:4px">Material</th><th style="text-align:right;padding:4px">Qty</th><th style="text-align:right;padding:4px">Total</th></tr>${w.materials.map(m=>`<tr style="border-top:1px solid var(--bd)"><td style="padding:5px 4px">${m.name}</td><td style="text-align:right;padding:5px 4px">${m.qty}</td><td style="text-align:right;padding:5px 4px">₹${(m.qty*m.cost).toLocaleString('en-IN')}</td></tr>`).join('')}<tr style="border-top:1px solid var(--bd2);font-weight:700;color:var(--re)"><td colspan="2" style="padding:6px 4px">Total</td><td style="text-align:right;padding:6px 4px">₹${w.materials.reduce((s,m)=>s+m.qty*m.cost,0).toLocaleString('en-IN')}</td></tr></table>`:'<span style="color:var(--t3);font-size:13px">No materials.</span>'}</div><div class="ds"><div class="dst">Photos (${(w.photos||[]).length})</div><div style="display:flex;flex-wrap:wrap;gap:8px">${(w.photos||[]).length?w.photos.map(p=>`<img src="${p}" onclick="openImg('${p}')" style="width:80px;height:80px;border-radius:7px;object-fit:cover;border:1px solid var(--bd);cursor:pointer">`).join(''):'<span style="color:var(--t3);font-size:13px">No photos.</span>'}</div></div>`;document.getElementById('dp').classList.add('on');}
 function closeDP(){document.getElementById('dp').classList.remove('on');curDP=null;}
 
 // ═══ WORK CRUD ═══
@@ -705,8 +725,35 @@ function delW(id){
 function getMR(){return[...document.querySelectorAll('.mr')].map(r=>({name:r.querySelector('.mn').value.trim(),qty:Number(r.querySelector('.mq').value)||0,cost:Number(r.querySelector('.mc2').value)||0})).filter(m=>m.name);}
 function addMR(m={}){const d=document.createElement('div');d.className='mr';d.innerHTML=`<input type="text" class="fn mn" placeholder="Material name" value="${m.name||''}"><input type="number" class="fn mq" placeholder="Qty" value="${m.qty||''}"><input type="number" class="fn mc2" placeholder="Unit ₹" value="${m.cost||''}"><button class="db" onclick="this.parentElement.remove()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;document.getElementById('mwrap').appendChild(d);}
 function pickS(s){document.getElementById('fst').value=s;const m={'In Progress':'s-ip','Work Done':'s-wd','Geotag Pending':'s-gp','Geotag Done':'s-gd'};Object.values(m).forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('on');});const el=document.getElementById(m[s]);if(el)el.classList.add('on');}
-function hPh(e){[...e.target.files].forEach(f=>{const r=new FileReader();r.onload=ev=>{tph.push(ev.target.result);rPh();};r.readAsDataURL(f);});}
-function rPh(){document.getElementById('ppp').innerHTML=tph.map(p=>`<img class="pt" src="${p}">`).join('');}
+
+// ═══ IMAGE COMPRESSION ═══
+function hPh(e) {
+  [...e.target.files].forEach(f => {
+    const r = new FileReader();
+    r.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        const max = 1000;
+        if (w > max || h > max) {
+          if (w > h) { h = (h / w) * max; w = max; }
+          else { w = (w / h) * max; h = max; }
+        }
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        tph.push(canvas.toDataURL('image/jpeg', 0.6));
+        rPh();
+      };
+      img.src = ev.target.result;
+    };
+    r.readAsDataURL(f);
+  });
+}
+function rPh() { 
+  document.getElementById('ppp').innerHTML = tph.map(p => `<img class="pt" src="${p}" onclick="openImg('${p}')" style="cursor:pointer">`).join(''); 
+}
 
 // ═══ GEOTAG ═══
 function setG(v) {
@@ -930,6 +977,39 @@ function saveWI(){
   eWhId=null; refreshCats(); rwl(); rwAlert(); nc();
   selWh=d.id; rWhDet(d.id);
   toast(wasEdit?'Material updated!':'✅ Material added!');
+}
+
+function delWI(){
+  const m=wh.find(x=>x.id===selWh);
+  if(!m||!confirm('Delete "'+m.name+'"?'))return;
+  if(window.fbDel){fbDel('warehouse',selWh);}
+  const logsToDelete=log.filter(l=>l.matId===selWh);
+  if(window.fbDel) logsToDelete.forEach(l=>fbDel('stocklog',l.id));
+  wh=wh.filter(x=>x.id!==selWh);
+  log=log.filter(l=>l.matId!==selWh);
+  localStorage.setItem('h_wh',JSON.stringify(wh));
+  localStorage.setItem('h_log',JSON.stringify(log));
+  selWh=null;
+  document.getElementById('wer').style.display='flex';
+  document.getElementById('wdet').style.display='none';
+  rwl();rwAlert();nc();toast('Deleted.');
+}
+
+function openTxn(type){const m=wh.find(x=>x.id===selWh);if(!m)return;txnT=type;document.getElementById('txnmn').textContent=m.name;document.getElementById('txncur').textContent=m.stock;document.getElementById('txnmu').textContent=m.unit;document.getElementById('txnd').value=new Date().toISOString().slice(0,10);['txnq','txns','txnr','txnno'].forEach(id=>document.getElementById(id).value='');document.getElementById('txntr').style.display='none';document.getElementById('txnqg').style.display=type==='adj'?'none':'flex';document.getElementById('txnsg').style.display=type==='adj'?'flex':'none';const tt={in:'📥 Add Stock to Warehouse',out:'📤 Remove Stock from Warehouse',adj:'🔧 Correct / Adjust Stock Count'};const tbl={in:'Add to Stock',out:'Remove from Stock',adj:'Save Correction'};document.getElementById('txnt').textContent=tt[type];document.getElementById('txnsb').textContent=tbl[type];document.getElementById('txnql').textContent=type==='in'?'Quantity to Add *':'Quantity to Remove *';document.getElementById('txn-ov').classList.add('on');}
+
+function closeTxnOv(e){if(e&&e.target!==document.getElementById('txn-ov'))return;document.getElementById('txn-ov').classList.remove('on');}
+
+function setTT(t){txnT=t;['in','out','adj'].forEach(x=>{document.getElementById('tt-'+x).className='ttbn'+(t===x?' tt-'+t:'');});document.getElementById('txnqg').style.display=t==='adj'?'none':'flex';document.getElementById('txnsg').style.display=t==='adj'?'flex':'none';document.getElementById('txnql').textContent=t==='in'?'Quantity to Add *':'Quantity to Remove *';}
+
+function saveTxn(){const m=wh.find(x=>x.id===selWh);if(!m)return;const date=document.getElementById('txnd').value||new Date().toISOString().slice(0,10);const ref=document.getElementById('txnr').value.trim();const note=document.getElementById('txnno').value.trim();let change=0,ns=m.stock;if(txnT==='adj'){const sv=Number(document.getElementById('txns').value);if(isNaN(sv)||sv<0){toast('Enter valid count!','var(--re)');return;}change=sv-m.stock;ns=sv;}else{const qty=Number(document.getElementById('txnq').value);if(!qty||qty<=0){toast('Enter valid quantity!','var(--re)');return;}if(txnT==='out'&&qty>m.stock){toast('Only '+m.stock+' '+m.unit+' available!','var(--re)');return;}change=txnT==='in'?qty:-qty;ns=m.stock+change;}m.stock=ns;log.push({id:nid(log),matId:m.id,type:txnT==='adj'?'adj':txnT==='in'?'in':'out',qty:change,balance:ns,date,ref,note});
+  localStorage.setItem('h_wh',JSON.stringify(wh));
+  localStorage.setItem('h_log',JSON.stringify(log));
+  if(window.fbSet){
+    fbSet('warehouse',m.id,m);
+    fbSet('stocklog',log[log.length-1].id,log[log.length-1]);
+  }
+  document.getElementById('txn-ov').classList.remove('on');
+  rWhDet(m.id);rwl();rwAlert();nc();if(m.stock<=m.min&&m.min>0)toast('⚠️ Low stock: '+m.name+' ('+m.stock+' '+m.unit+')','var(--or)');else toast('✅ '+m.name+': now '+ns+' '+m.unit,'var(--gr)');
 }
 
 // ═══ TOAST ═══
