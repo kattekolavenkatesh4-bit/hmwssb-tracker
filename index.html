@@ -802,12 +802,13 @@ function addMR(m={}){const d=document.createElement('div');d.className='mr';d.in
 function pickS(s){document.getElementById('fst').value=s;const m={'In Progress':'s-ip','Work Done':'s-wd','Geotag Pending':'s-gp','Geotag Done':'s-gd'};Object.values(m).forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('on');});const el=document.getElementById(m[s]);if(el)el.classList.add('on');}
 
 // ═══ IMAGE COMPRESSION (DIRECT TO DATABASE) ═══
-function hPh(e) {
-  toast('Compressing photo...', 'var(--fw)');
-  document.getElementById('phi').disabled = true; 
-  const files = [...e.target.files];
-  let processedCount = 0;
+<!-- Use the version of index.html I provided in the previous message, 
+     but replace the hPh(e) function with this exact version to 
+     force it to use the database instead of storage: -->
 
+function hPh(e) {
+  toast('Processing photo...', 'var(--fw)');
+  const files = [...e.target.files];
   files.forEach(f => {
     const r = new FileReader();
     r.onload = ev => {
@@ -815,7 +816,7 @@ function hPh(e) {
       img.onload = () => {
         const canvas = document.createElement('canvas');
         let w = img.width, h = img.height;
-        const max = 800; // Small size to ensure it fits in database
+        const max = 600; // Even smaller size to be super safe for database
         if (w > max || h > max) {
           if (w > h) { h = (h / w) * max; w = max; }
           else { w = (w / h) * max; h = max; }
@@ -823,17 +824,10 @@ function hPh(e) {
         canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, w, h);
-        
-        // Squash it down to a tiny text string
-        const base64Data = canvas.toDataURL('image/jpeg', 0.5); 
-        tph.push(base64Data); // Add directly to the array that gets saved to Firestore
+        const base64Data = canvas.toDataURL('image/jpeg', 0.4); // High compression
+        tph.push(base64Data);
         rPh();
-        
-        processedCount++;
-        if(processedCount === files.length) {
-          toast('✅ Photos compressed & attached!', 'var(--gr)');
-          document.getElementById('phi').disabled = false;
-        }
+        toast('✅ Photo attached to record!', 'var(--gr)');
       };
       img.src = ev.target.result;
     };
