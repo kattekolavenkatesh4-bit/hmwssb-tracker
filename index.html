@@ -644,7 +644,7 @@ function openRoutes() {
   document.getElementById('routes-b').innerHTML = h;
   document.getElementById('routes-ov').classList.add('on');
 }
-function closeRoutesOv(e) { if(e && e.target !== document.getElementById('routes-ov')) return; document.getElementById('routes-ov').remove('on'); }
+function closeRoutesOv(e) { if(e && e.target !== document.getElementById('routes-ov')) return; document.getElementById('routes-ov').classList.remove('on'); }
 
 function navArea(area) {
   const list = works.filter(w => w.status === 'Geotag Pending' && (w.area||'Unknown Area') === area).slice(0, 10);
@@ -859,7 +859,7 @@ function pickMM(m){mmo=m;rMat();}
 
 // ═══ WAREHOUSE ═══
 const CE={Pipes:'🪠',Fittings:'🔧',Valves:'🚰',Meters:'📊',Chambers:'🏗️',Tools:'🛠️',Other:'📦'};
-function sSt(m){if(m.stock===0)return{cls:'pill pgr',label:'⚫ Out of Stock',col:'var(--t3)'};if(m.stock<=m.min)return{cls:'pill pr',label:'🔴 Low Stock',col:'var(--re)'};return{cls:'pill pg',label:'🟢 In Stock',col(--gr)'};}
+function sSt(m){if(m.stock===0)return{cls:'pill pgr',label:'⚫ Out of Stock',col:'var(--t3)'};if(m.stock<=m.min)return{cls:'pill pr',label:'🔴 Low Stock',col:'var(--re)'};return{cls:'pill pg',label:'🟢 In Stock',col:'var(--gr)'};}
 
 function rwl(){
   const q=(document.getElementById('wsrch')?.value||'').toLowerCase();
