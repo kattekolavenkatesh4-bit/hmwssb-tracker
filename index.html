@@ -791,7 +791,7 @@ function hPh(e) {
         canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, w, h);
-        const base64Data = canvas.toToDataURL ? canvas.toDataURL('image/jpeg', 0.85) : canvas.toDataURL('image/jpeg', 0.85); 
+        const base64Data = canvas.toDataURL('image/jpeg', 0.85); 
         tph.push(base64Data);
         rPh();
         toast('✅ Photo attached clearly!', 'var(--gr)');
@@ -931,7 +931,7 @@ function rwAlert(){
 function qAdd(id,n){
   const m=wh.find(x=>x.id===id);if(!m)return;
   m.stock+=n;
-  const entry={id:nid(log),matId:id,type:'in',qty:n,balance:m.stock,date:new Date().toISOString().slice(0,10),ref:'Quick Add',note:''};
+  const entry={id:nid(),matId:id,type:'in',qty:n,balance:m.stock,date:new Date().toISOString().slice(0,10),ref:'Quick Add',note:''};
   log.push(entry);
   svW(); svL();
   rWhDet(id);rwl();rwAlert();nc();
@@ -941,7 +941,7 @@ function qAdd(id,n){
 function qRem(id){
   const m=wh.find(x=>x.id===id);if(!m||m.stock<=0){toast('Already zero!','var(--re)');return;}
   m.stock--;
-  const entry={id:nid(log),matId:id,type:'out',qty:-1,balance:m.stock,date:new Date().toISOString().slice(0,10),ref:'Quick Remove',note:''};
+  const entry={id:nid(),matId:id,type:'out',qty:-1,balance:m.stock,date:new Date().toISOString().slice(0,10),ref:'Quick Remove',note:''};
   log.push(entry);
   svW(); svL();
   rWhDet(id);rwl();rwAlert();nc();
@@ -1009,8 +1009,8 @@ function saveWI(){
 
   const stock=Number(document.getElementById('wis').value)||0;
   const wasEdit=!!eWhId;
-  const d={id:eWhId||nid(wh),name,cat:cat,unit:document.getElementById('wiu').value,stock,min:Number(document.getElementById('wim').value)||0,price:Number(document.getElementById('wip').value)||0,supplier:document.getElementById('wisp').value.trim(),notes:document.getElementById('wino').value.trim()};
-  if(eWhId){const i=wh.findIndex(x=>x.id===eWhId);if(i!==-1)wh[i]=d;}else{wh.push(d);if(stock>0){const entry={id:nid(log),matId:d.id,type:'in',qty:stock,balance:stock,date:new Date().toISOString().slice(0,10),ref:'Opening',note:'Initial entry'};log.push(entry);svL();}}
+  const d={id:eWhId||nid(),name,cat:cat,unit:document.getElementById('wiu').value,stock,min:Number(document.getElementById('wim').value)||0,price:Number(document.getElementById('wip').value)||0,supplier:document.getElementById('wisp').value.trim(),notes:document.getElementById('wino').value.trim()};
+  if(eWhId){const i=wh.findIndex(x=>x.id===eWhId);if(i!==-1)wh[i]=d;}else{wh.push(d);if(stock>0){const entry={id:nid(),matId:d.id,type:'in',qty:stock,balance:stock,date:new Date().toISOString().slice(0,10),ref:'Opening',note:'Initial entry'};log.push(entry);svL();}}
   
   svW();
   document.getElementById('wi-ov').classList.remove('on');
@@ -1052,7 +1052,7 @@ function saveTxn(){
     change=txnT==='in'?qty:-qty;ns=m.stock+change;
   }
   m.stock=ns;
-  log.push({id:nid(log),matId:m.id,type:txnT==='adj'?'adj':txnT==='in'?'in':'out',qty:change,balance:ns,date,ref,note});
+  log.push({id:nid(),matId:m.id,type:txnT==='adj'?'adj':txnT==='in'?'in':'out',qty:change,balance:ns,date,ref,note});
   
   svW(); svL();
   document.getElementById('txn-ov').classList.remove('on');
