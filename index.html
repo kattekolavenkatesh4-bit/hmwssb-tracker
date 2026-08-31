@@ -515,7 +515,7 @@ tbody tr:hover .ra{opacity:1}
 <div id="gprev" style="display:none;margin-top:8px"><a id="gpl" href="#" target="_blank" class="gl"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> Preview on Maps</a> <button onclick="clearG()" style="margin-left:8px;font-size:11px;color:var(--t3);cursor:pointer;padding:2px 8px;border-radius:4px;background:var(--s);border:1px solid var(--bd)">✕ Clear</button></div>
 <input type="hidden" id="fg">
 </div>
-<div class="fi"><label class="fl">Govt. Tag Number</label><input type="text" class="fn" id="fgt" placeholder="e.g. HMWS/2024/00123"></div>
+<div class="fi"><label class="fl">Geo tag no</label><input type="text" class="fn" id="fgt" placeholder="e.g. HMWS/2024/00123"></div>
 <div class="fi"></div>
 <div class="sh">⚙️ Status & Date</div>
 <div class="fi s2"><label class="fl">Status *</label>
@@ -621,6 +621,7 @@ let tph=[];
 
 function nid(){ return Date.now() + Math.floor(Math.random()*10000); }
 
+
 // ═══ EXPORT CSV ═══
 function exportCSV(type) {
   let csv = "";
@@ -628,10 +629,11 @@ function exportCSV(type) {
   
   if (type === 'fw' || type === 'sw') {
     const list = fW(type);
-    csv = "Work Name,Area,Address,Status,Date,Revenue,Materials Count\n";
+    // Updated Headers: Location (GPS) and Geo tag no (ID)
+    csv = "Work Name,Area,Address,Status,Date,Location,Geo tag no\n";
     list.forEach(w => {
       const addr = [w.house?'#'+w.house:'', w.colony].filter(Boolean).join(' ');
-      csv += `${esc(w.name)},${esc(w.area)},${esc(addr)},${esc(w.status)},${esc(w.date)},${esc(w.revenue||0)},${esc((w.materials||[]).length)}\n`;
+      csv += `${esc(w.name)},${esc(w.area)},${esc(addr)},${esc(w.status)},${esc(w.date)},${esc(w.geo)},${esc(w.govtag)}\n`;
     });
   } else if (type === 'mat') {
     const fw = mmo === 'all' ? works : works.filter(w => w.date?.startsWith(mmo));
@@ -738,34 +740,53 @@ function sortW(t,f){if(srt[t].f===f)srt[t].d*=-1;else{srt[t].f=f;srt[t].d=1;}rW(
 function setV(t,v){vw[t]=v;document.getElementById('vt-'+t).classList.toggle('on',v==='table');document.getElementById('vc-'+t).classList.toggle('on',v==='cards');rW(t)}
 function sp(s){const m={'In Progress':'pill po','Work Done':'pill pb','Geotag Pending':'pill pr','Geotag Done':'pill pg'};const ic={'In Progress':'🟠','Work Done':'🔵','Geotag Pending':'🔴','Geotag Done':'🟢'};return `<span class="${m[s]||'pill pgr'}">${ic[s]||''} ${s}</span>`}
 function gl(g){if(!g||!g.trim())return '<span style="color:var(--t3);font-size:12px;">— Not set</span>';const[la,ln]=g.split(',').map(s=>s.trim());return `<a class="gl" href="https://www.google.com/maps/search/?api=1&query=${la},${ln}" target="_blank" onclick="event.stopPropagation()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> View Map</a>`}
-function rW(t){
+
+ function rW(t){
   const list=fW(t);
   const areas=[...new Set(byT(t).map(w=>w.area).filter(Boolean))].sort();
   const months=[...new Set(byT(t).map(w=>w.date?.slice(0,7)).filter(Boolean))].sort().reverse();
+  
+  const curQ=document.getElementById('s-'+t)?.value||'';
+  const curS=document.getElementById('fs-'+t)?.value||'';
   const curA=document.getElementById('fa-'+t)?.value||'';
   const curM=document.getElementById('fm-'+t)?.value||'';
+  
+  const sO=['In Progress','Work Done','Geotag Pending','Geotag Done'].map(s=>`<option${curS===s?' selected':''}>${s}</option>`).join('');
   const aO=areas.map(a=>`<option${curA===a?' selected':''}>${a}</option>`).join('');
   const mO=months.map(m=>`<option value="${m}"${curM===m?' selected':''}>${new Date(m+'-01').toLocaleString('default',{month:'long',year:'numeric'})}</option>`).join('');
-  const stats=['c1,Total,'+list.length+',All entries','c2,In Progress,'+list.filter(w=>w.status==='In Progress').length+',Active','c3,Completed,'+list.filter(w=>w.status==='Work Done').length+',Done','c4,Geo Pending,'+list.filter(w=>w.status==='Geotag Pending').length+',Needs geotag'].map(s=>{const[c,l,v,ss]=s.split(',');return`<div class="sc ${c}"><div class="sl">${l}</div><div class="sv">${v}</div><div class="ss">${ss}</div></div>`;}).join('');
+  
+  let focusId = document.activeElement?.id;
+  let cPos = document.activeElement?.selectionStart;
+
+  const stats=['c1,Total,'+list.length+',All entries','c2,In Progress,'+list.filter(w=>w.status==='In Progress').length+',Active','c3,Completed,'+list.filter(w=>w.status==='Work Done'||w.status==='Geotag Done').length+',Done','c4,Geo Pending,'+list.filter(w=>w.status==='Geotag Pending').length+',Needs geotag'].map(s=>{const[c,l,v,ss]=s.split(',');return`<div class="sc ${c}"><div class="sl">${l}</div><div class="sv">${v}</div><div class="ss">${ss}</div></div>`;}).join('');
+  
   const trows=list.map((w,i)=>`<tr onclick="openDP(${w.id})"><td style="color:var(--t3);font-size:12px">${i+1}</td><td><div style="font-weight:600">${w.name}</div></td><td style="font-size:12px;color:var(--t2)">${[w.house?'#'+w.house:'',w.colony].filter(Boolean).join(', ')||'—'}</td><td style="font-size:13px;color:var(--t2)">${w.area||'—'}</td><td>${gl(w.geo)}</td><td>${w.govtag?`<span class="gt">${w.govtag}</span>`:'—'}</td><td><div style="display:flex;flex-wrap:wrap;gap:3px">${(w.materials||[]).slice(0,2).map(m=>`<span class="chip" style="font-size:11px">${m.name}</span>`).join('')}${(w.materials||[]).length>2?`<span class="chip" style="font-size:11px">+${w.materials.length-2}</span>`:''}</div></td><td style="font-size:12px;color:var(--t3)">📷 ${(w.photos||[]).length}</td><td>${sp(w.status)}</td><td style="font-size:12px;color:var(--t2)">${w.date?new Date(w.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'}):'—'}</td><td onclick="event.stopPropagation()"><div class="ra"><button class="ib" onclick="editW(${w.id})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="ib" onclick="delW(${w.id})" style="color:var(--re)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button></div></td></tr>`).join('');
+  
   const cards=list.map(w=>`<div class="wc" onclick="openDP(${w.id})"><div class="cs" style="background:${t==='fw'?'var(--fw)':'var(--sw)'}"></div><div class="cb"><div class="ct">${w.name}</div><div class="ca">📍 ${w.area}${w.house?' · #'+w.house:''}${w.colony?' · '+w.colony:''}</div><div class="cm">${sp(w.status)}${w.geo?gl(w.geo):''}</div>${w.govtag?`<span class="gt" style="font-size:11.5px">${w.govtag}</span>`:''}</div><div class="cf"><span style="font-size:11.5px;color:var(--t3)">${w.date?new Date(w.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'}):'—'}</span><span style="font-size:12px;color:var(--t3)">📷${(w.photos||[]).length} 🧱${(w.materials||[]).length}</span></div></div>`).join('');
+  
   const emp=`<div class="emp"><div class="ei">${t==='fw'?'💧':'🔩'}</div><div class="et">No works found</div><div>Add a new work entry above.</div></div>`;
+  
   document.getElementById('page-'+t).innerHTML=`
 <div class="srow" style="grid-template-columns:repeat(4,1fr)">${stats}</div>
 <div class="fbar">
-<div class="sb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6e7681" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="s-${t}" placeholder="Search name, area, address…" oninput="rW('${t}')"></div>
-<select class="fs" id="fs-${t}" onchange="rW('${t}')"><option value="">All Status</option><option>In Progress</option><option>Work Done</option><option>Geotag Pending</option><option>Geotag Done</option></select>
+<div class="sb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6e7681" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="s-${t}" placeholder="Search name, area, address…" oninput="rW('${t}')" value="${curQ}"></div>
+<select class="fs" id="fs-${t}" onchange="rW('${t}')"><option value="">All Status</option>${sO}</select>
 <select class="fs" id="fa-${t}" onchange="rW('${t}')"><option value="">All Areas</option>${aO}</select>
 <select class="fs" id="fm-${t}" onchange="rW('${t}')"><option value="">All Months</option>${mO}</select>
 <div class="vt"><button class="btn bg" onclick="exportCSV('${t}')" style="font-size:12.5px;padding:7px 12px;margin-right:6px">📥 CSV</button><button class="vb ${vw[t]==='table'?'on':''}" id="vt-${t}" onclick="setV('${t}','table')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/></svg></button><button class="vb ${vw[t]==='cards'?'on':''}" id="vc-${t}" onclick="setV('${t}','cards')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button></div>
 </div>
-${vw[t]==='table'?`<div class="tw"><div class="tw-scroll"><table><thead><tr><th>#</th><th onclick="sortW('${t}','name')" style="cursor:pointer">Work Name</th><th>Address</th><th onclick="sortW('${t}','area')" style="cursor:pointer">Area</th><th>Geotag</th><th>Govt Tag</th><th>Materials</th><th>Photos</th><th>Status</th><th onclick="sortW('${t}','date')" style="cursor:pointer">Date</th><th>Actions</th></tr></thead><tbody>${trows}</tbody></table></div>${list.length===0?emp:''}</div>`:`<div class="cg">${list.length===0?emp:cards}</div>`}`;
+${vw[t]==='table'?`<div class="tw"><div class="tw-scroll"><table><thead><tr><th>#</th><th onclick="sortW('${t}','name')" style="cursor:pointer">Work Name</th><th>Address</th><th onclick="sortW('${t}','area')" style="cursor:pointer">Area</th><th>Location</th><th>Geo tag no</th><th>Materials</th><th>Photos</th><th>Status</th><th onclick="sortW('${t}','date')" style="cursor:pointer">Date</th><th>Actions</th></tr></thead><tbody>${trows}</tbody></table></div>${list.length===0?emp:''}</div>`:`<div class="cg">${list.length===0?emp:cards}</div>`}`;
+
+  if (focusId && document.getElementById(focusId)) {
+    const el = document.getElementById(focusId);
+    el.focus();
+    if(el.setSelectionRange && cPos !== null) el.setSelectionRange(cPos, cPos);
+  }
 }
 function nc(){document.getElementById('nc-fw').textContent=works.filter(w=>w.type==='Freshwater').length;document.getElementById('nc-sw').textContent=works.filter(w=>w.type==='Sewerage').length;const lw=wh.filter(m=>m.stock<=m.min).length;const b=document.getElementById('nc-wh');b.style.display=lw>0?'inline-flex':'none';b.textContent=lw;}
 
 // ═══ DETAIL PANEL ═══
-function openDP(id){const w=works.find(x=>x.id===id);if(!w)return;curDP=id;document.getElementById('dp-ti').textContent=w.name;document.getElementById('dp-ty').textContent=w.type+' Work';document.getElementById('dpb').innerHTML=`<div class="ds"><div class="dst">Status</div>${sp(w.status)}</div><div class="ds"><div class="dst">Location</div><div style="margin-bottom:8px"><div style="font-size:11.5px;color:var(--t3)">Area</div><div style="font-size:13.5px;font-weight:500">${w.area||'—'}</div></div><div style="margin-bottom:8px"><div style="font-size:11.5px;color:var(--t3)">Address</div><div style="font-size:13.5px;font-weight:500">${[w.house?'#'+w.house:'',w.colony].filter(Boolean).join(', ')||'—'}</div></div><div><div style="font-size:11.5px;color:var(--t3)">Geotag</div><div style="margin-top:3px">${gl(w.geo)}</div></div></div><div class="ds"><div class="dst">Reference</div><div style="margin-bottom:8px"><div style="font-size:11.5px;color:var(--t3)">Govt. Tag</div><div style="font-size:13.5px">${w.govtag?`<span class="gt">${w.govtag}</span>`:'—'}</div></div><div style="margin-bottom:8px"><div style="font-size:11.5px;color:var(--t3)">Date</div><div style="font-size:13.5px;font-weight:500">${w.date?new Date(w.date).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}):'—'}</div></div><div><div style="font-size:11.5px;color:var(--t3)">Revenue</div><div style="font-size:16px;font-weight:700;color:var(--gr)">₹${Number(w.revenue||0).toLocaleString('en-IN')}</div></div></div><div class="ds"><div class="dst">Materials (${(w.materials||[]).length})</div>${(w.materials||[]).length?`<table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr style="color:var(--t3)"><th style="text-align:left;padding:4px">Material</th><th style="text-align:right;padding:4px">Qty</th><th style="text-align:right;padding:4px">Total</th></tr>${w.materials.map(m=>`<tr style="border-top:1px solid var(--bd)"><td style="padding:5px 4px">${m.name}</td><td style="text-align:right;padding:5px 4px">${m.qty}</td><td style="text-align:right;padding:5px 4px">₹${(m.qty*m.cost).toLocaleString('en-IN')}</td></tr>`).join('')}<tr style="border-top:1px solid var(--bd2);font-weight:700;color:var(--re)"><td colspan="2" style="padding:6px 4px">Total</td><td style="text-align:right;padding:6px 4px">₹${w.materials.reduce((s,m)=>s+m.qty*m.cost,0).toLocaleString('en-IN')}</td></tr></table>`:'<span style="color:var(--t3);font-size:13px">No materials.</span>'}</div><div class="ds"><div class="dst">Photos (${(w.photos||[]).length})</div><div style="display:flex;flex-wrap:wrap;gap:8px">${(w.photos||[]).length?w.photos.map(p=>`<img src="${p}" onclick="openImg('${p}')" style="width:80px;height:80px;border-radius:7px;object-fit:cover;border:1px solid var(--bd);cursor:pointer">`).join(''):'<span style="color:var(--t3);font-size:13px">No photos.</span>'}</div></div>`;document.getElementById('dp').classList.add('on');}
-function closeDP(){document.getElementById('dp').classList.remove('on');curDP=null;}
+function openDP(id){const w=works.find(x=>x.id===id);if(!w)return;curDP=id;document.getElementById('dp-ti').textContent=w.name;document.getElementById('dp-ty').textContent=w.type+' Work';document.getElementById('dpb').innerHTML=`<div class="ds"><div class="dst">Status</div>${sp(w.status)}</div><div class="ds"><div class="dst">Location Details</div><div style="margin-bottom:8px"><div style="font-size:11.5px;color:var(--t3)">Area</div><div style="font-size:13.5px;font-weight:500">${w.area||'—'}</div></div><div style="margin-bottom:8px"><div style="font-size:11.5px;color:var(--t3)">Address</div><div style="font-size:13.5px;font-weight:500">${[w.house?'#'+w.house:'',w.colony].filter(Boolean).join(', ')||'—'}</div></div><div><div style="font-size:11.5px;color:var(--t3)">Location</div><div style="margin-top:3px">${gl(w.geo)}</div></div></div><div class="ds"><div class="dst">Reference</div><div style="margin-bottom:8px"><div style="font-size:11.5px;color:var(--t3)">Geo tag no</div><div style="font-size:13.5px">${w.govtag?`<span class="gt">${w.govtag}</span>`:'—'}</div></div><div style="margin-bottom:8px"><div style="font-size:11.5px;color:var(--t3)">Date</div><div style="font-size:13.5px;font-weight:500">${w.date?new Date(w.date).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}):'—'}</div></div><div><div style="font-size:11.5px;color:var(--t3)">Revenue</div><div style="font-size:16px;font-weight:700;color:var(--gr)">₹${Number(w.revenue||0).toLocaleString('en-IN')}</div></div></div><div class="ds"><div class="dst">Materials (${(w.materials||[]).length})</div>${(w.materials||[]).length?`<table style="width:100%;font-size:12.5px;border-collapse:collapse"><tr style="color:var(--t3)"><th style="text-align:left;padding:4px">Material</th><th style="text-align:right;padding:4px">Qty</th><th style="text-align:right;padding:4px">Total</th></tr>${w.materials.map(m=>`<tr style="border-top:1px solid var(--bd)"><td style="padding:5px 4px">${m.name}</td><td style="text-align:right;padding:5px 4px">${m.qty}</td><td style="text-align:right;padding:5px 4px">₹${(m.qty*m.cost).toLocaleString('en-IN')}</td></tr>`).join('')}<tr style="border-top:1px solid var(--bd2);font-weight:700;color:var(--re)"><td colspan="2" style="padding:6px 4px">Total</td><td style="text-align:right;padding:6px 4px">₹${w.materials.reduce((s,m)=>s+m.qty*m.cost,0).toLocaleString('en-IN')}</td></tr></table>`:'<span style="color:var(--t3);font-size:13px">No materials.</span>'}</div><div class="ds"><div class="dst">Photos (${(w.photos||[]).length})</div><div style="display:flex;flex-wrap:wrap;gap:8px">${(w.photos||[]).length?w.photos.map(p=>`<img src="${p}" onclick="openImg('${p}')" style="width:80px;height:80px;border-radius:7px;object-fit:cover;border:1px solid var(--bd);cursor:pointer">`).join(''):'<span style="color:var(--t3);font-size:13px">No photos.</span>'}</div></div>`;document.getElementById('dp').classList.add('on');}function closeDP(){document.getElementById('dp').classList.remove('on');curDP=null;}
 
 // ═══ WORK CRUD ═══
 function openWM(){eWId=null;document.getElementById('wm-t').textContent='➕ Add New Work';clrWF();document.getElementById('fdt').value=new Date().toISOString().slice(0,10);document.getElementById('wm-ov').classList.add('on');}
